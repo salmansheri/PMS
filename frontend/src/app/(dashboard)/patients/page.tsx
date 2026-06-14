@@ -4,13 +4,52 @@ import { useMutation } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "motion/react";
 import type React from "react";
 import { useState } from "react";
-import { postPatientsMutation } from "@/client/@tanstack/react-query.gen";
+import { useRegisterPatient } from "@/hooks/api/use-patients";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@/components/ui/field";
 import { GlassPanel } from "@/components/ui/glass-panel";
-import { Input, Select } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/ui/loading-state";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { StateController } from "@/components/ui/state-controller";
 import { SystemAlertBanner } from "@/components/ui/system-alert-banner";
+import { Textarea } from "@/components/ui/textarea";
+
+const genderItems = [
+  { label: "Select Gender...", value: null },
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+  { label: "Other / Non-binary", value: "other" },
+  { label: "Prefer not to say", value: "prefer_not" },
+];
+
+const bloodTypeItems = [
+  { label: "Select Blood Type...", value: null },
+  { value: "A+", label: "A+" },
+  { value: "A-", label: "A-" },
+  { value: "B+", label: "B+" },
+  { value: "B-", label: "B-" },
+  { value: "AB+", label: "AB+" },
+  { value: "AB-", label: "AB-" },
+  { value: "O+", label: "O+" },
+  { value: "O-", label: "O-" },
+  { value: "Unknown", label: "Unknown" },
+];
 
 const pageVariants = {
   initial: { opacity: 0, y: 15 },
@@ -30,7 +69,7 @@ const simulatorStates = [
 ];
 
 export default function PatientIntakePage() {
-  const registerPatientMutation = useMutation(postPatientsMutation());
+  const registerPatientMutation = useRegisterPatient();
   const [activeState, setActiveState] = useState<string>("intake_form");
   const [step, setStep] = useState(1);
 
@@ -434,89 +473,98 @@ export default function PatientIntakePage() {
                             Personal Information
                           </h3>
                         </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="name"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Full Legal Name
-                            </label>
-                            <Input
-                              id="name"
-                              placeholder="e.g., Jane Doe"
-                              required
-                              value={name}
-                              onChange={(e) => setName(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="dob"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Date of Birth
-                            </label>
-                            <Input
-                              id="dob"
-                              type="date"
-                              required
-                              value={dob}
-                              onChange={(e) => setDob(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="gender"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Gender
-                            </label>
-                            <Select
-                              id="gender"
-                              options={[
-                                { value: "male", label: "Male" },
-                                { value: "female", label: "Female" },
-                                { value: "other", label: "Other / Non-binary" },
-                                {
-                                  value: "prefer_not",
-                                  label: "Prefer not to say",
-                                },
-                              ]}
-                              value={gender}
-                              onChange={(e) => setGender(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="ssn"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Social Security Number / National ID
-                            </label>
-                            <Input
-                              id="ssn"
-                              placeholder="e.g. XXX-XX-XXXX"
-                              required
-                              value={ssn}
-                              onChange={(e) => setSsn(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2 md:col-span-2">
-                            <label
-                              htmlFor="nationality"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Nationality
-                            </label>
-                            <Input
-                              id="nationality"
-                              placeholder="e.g., Japanese"
-                              required
-                              value={nationality}
-                              onChange={(e) => setNationality(e.target.value)}
-                            />
-                          </div>
+                        <div className="p-6">
+                          <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Field>
+                              <FieldLabel
+                                htmlFor="name"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Full Legal Name
+                              </FieldLabel>
+                              <Input
+                                id="name"
+                                placeholder="e.g., Jane Doe"
+                                required
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                              />
+                            </Field>
+                            <Field>
+                              <FieldLabel
+                                htmlFor="dob"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Date of Birth
+                              </FieldLabel>
+                              <Input
+                                id="dob"
+                                type="date"
+                                required
+                                value={dob}
+                                onChange={(e) => setDob(e.target.value)}
+                              />
+                            </Field>
+                            <Field>
+                              <FieldLabel
+                                htmlFor="gender"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Gender
+                              </FieldLabel>
+                              <Select
+                                value={gender || null}
+                                onValueChange={(val) => setGender(val || "")}
+                                items={genderItems}
+                              >
+                                <SelectTrigger className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface">
+                                  <SelectValue placeholder="Select Gender" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
+                                  <SelectGroup>
+                                    {genderItems.map((item) => (
+                                      <SelectItem
+                                        key={item.value ?? "null"}
+                                        value={item.value ?? ""}
+                                      >
+                                        {item.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                </SelectContent>
+                              </Select>
+                            </Field>
+                            <Field>
+                              <FieldLabel
+                                htmlFor="ssn"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Social Security Number / National ID
+                              </FieldLabel>
+                              <Input
+                                id="ssn"
+                                placeholder="e.g. XXX-XX-XXXX"
+                                required
+                                value={ssn}
+                                onChange={(e) => setSsn(e.target.value)}
+                              />
+                            </Field>
+                            <Field className="md:col-span-2">
+                              <FieldLabel
+                                htmlFor="nationality"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Nationality
+                              </FieldLabel>
+                              <Input
+                                id="nationality"
+                                placeholder="e.g., Japanese"
+                                required
+                                value={nationality}
+                                onChange={(e) => setNationality(e.target.value)}
+                              />
+                            </Field>
+                          </FieldGroup>
                         </div>
                       </div>
 
@@ -530,56 +578,58 @@ export default function PatientIntakePage() {
                             Contact Details
                           </h3>
                         </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="phone"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Phone Number
-                            </label>
-                            <Input
-                              id="phone"
-                              type="tel"
-                              placeholder="+1 (555) 000-0000"
-                              required
-                              value={phone}
-                              onChange={(e) => setPhone(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="email"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Email Address
-                            </label>
-                            <Input
-                              id="email"
-                              type="email"
-                              placeholder="patient@example.com"
-                              required
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2 md:col-span-2">
-                            <label
-                              htmlFor="address"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Home Address
-                            </label>
-                            <textarea
-                              id="address"
-                              className="input-tech w-full p-3 text-on-surface font-body-md text-body-md resize-none"
-                              placeholder="Full residential address..."
-                              rows={2}
-                              required
-                              value={address}
-                              onChange={(e) => setAddress(e.target.value)}
-                            />
-                          </div>
+                        <div className="p-6">
+                          <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Field>
+                              <FieldLabel
+                                htmlFor="phone"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Phone Number
+                              </FieldLabel>
+                              <Input
+                                id="phone"
+                                type="tel"
+                                placeholder="+1 (555) 000-0000"
+                                required
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                              />
+                            </Field>
+                            <Field>
+                              <FieldLabel
+                                htmlFor="email"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Email Address
+                              </FieldLabel>
+                              <Input
+                                id="email"
+                                type="email"
+                                placeholder="patient@example.com"
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                              />
+                            </Field>
+                            <Field className="md:col-span-2">
+                              <FieldLabel
+                                htmlFor="address"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Home Address
+                              </FieldLabel>
+                              <Textarea
+                                id="address"
+                                className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface"
+                                placeholder="Full residential address..."
+                                rows={2}
+                                required
+                                value={address}
+                                onChange={(e) => setAddress(e.target.value)}
+                              />
+                            </Field>
+                          </FieldGroup>
                         </div>
                       </div>
 
@@ -594,61 +644,63 @@ export default function PatientIntakePage() {
                               Emergency Contact
                             </h3>
                           </div>
-                          <div className="p-6 space-y-4">
-                            <div className="space-y-2">
-                              <label
-                                htmlFor="emergencyName"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Contact Name
-                              </label>
-                              <Input
-                                id="emergencyName"
-                                placeholder="e.g., John Doe"
-                                required
-                                value={emergencyName}
-                                onChange={(e) =>
-                                  setEmergencyName(e.target.value)
-                                }
-                              />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <label
-                                  htmlFor="emergencyRelation"
+                          <div className="p-6">
+                            <FieldGroup className="flex flex-col gap-4">
+                              <Field>
+                                <FieldLabel
+                                  htmlFor="emergencyName"
                                   className="font-label-caps text-label-caps text-on-surface-variant"
                                 >
-                                  Relationship
-                                </label>
+                                  Contact Name
+                                </FieldLabel>
                                 <Input
-                                  id="emergencyRelation"
-                                  placeholder="e.g., Spouse"
+                                  id="emergencyName"
+                                  placeholder="e.g., John Doe"
                                   required
-                                  value={emergencyRelation}
+                                  value={emergencyName}
                                   onChange={(e) =>
-                                    setEmergencyRelation(e.target.value)
+                                    setEmergencyName(e.target.value)
                                   }
                                 />
+                              </Field>
+                              <div className="grid grid-cols-2 gap-4">
+                                <Field>
+                                  <FieldLabel
+                                    htmlFor="emergencyRelation"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Relationship
+                                  </FieldLabel>
+                                  <Input
+                                    id="emergencyRelation"
+                                    placeholder="e.g., Spouse"
+                                    required
+                                    value={emergencyRelation}
+                                    onChange={(e) =>
+                                      setEmergencyRelation(e.target.value)
+                                    }
+                                  />
+                                </Field>
+                                <Field>
+                                  <FieldLabel
+                                    htmlFor="emergencyPhone"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Phone
+                                  </FieldLabel>
+                                  <Input
+                                    id="emergencyPhone"
+                                    type="tel"
+                                    placeholder="555-0199"
+                                    required
+                                    value={emergencyPhone}
+                                    onChange={(e) =>
+                                      setEmergencyPhone(e.target.value)
+                                    }
+                                  />
+                                </Field>
                               </div>
-                              <div className="space-y-2">
-                                <label
-                                  htmlFor="emergencyPhone"
-                                  className="font-label-caps text-label-caps text-on-surface-variant"
-                                >
-                                  Phone
-                                </label>
-                                <Input
-                                  id="emergencyPhone"
-                                  type="tel"
-                                  placeholder="555-0199"
-                                  required
-                                  value={emergencyPhone}
-                                  onChange={(e) =>
-                                    setEmergencyPhone(e.target.value)
-                                  }
-                                />
-                              </div>
-                            </div>
+                            </FieldGroup>
                           </div>
                         </div>
 
@@ -661,46 +713,55 @@ export default function PatientIntakePage() {
                               Medical Baseline
                             </h3>
                           </div>
-                          <div className="p-6 space-y-4">
-                            <div className="space-y-2">
-                              <label
-                                htmlFor="bloodType"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Blood Type
-                              </label>
-                              <Select
-                                id="bloodType"
-                                options={[
-                                  { value: "A+", label: "A+" },
-                                  { value: "A-", label: "A-" },
-                                  { value: "B+", label: "B+" },
-                                  { value: "B-", label: "B-" },
-                                  { value: "AB+", label: "AB+" },
-                                  { value: "AB-", label: "AB-" },
-                                  { value: "O+", label: "O+" },
-                                  { value: "O-", label: "O-" },
-                                  { value: "Unknown", label: "Unknown" },
-                                ]}
-                                value={bloodType}
-                                onChange={(e) => setBloodType(e.target.value)}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <label
-                                htmlFor="language"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Primary Language
-                              </label>
-                              <Input
-                                id="language"
-                                placeholder="e.g., English, Japanese"
-                                required
-                                value={language}
-                                onChange={(e) => setLanguage(e.target.value)}
-                              />
-                            </div>
+                          <div className="p-6">
+                            <FieldGroup className="flex flex-col gap-4">
+                              <Field>
+                                <FieldLabel
+                                  htmlFor="bloodType"
+                                  className="font-label-caps text-label-caps text-on-surface-variant"
+                                >
+                                  Blood Type
+                                </FieldLabel>
+                                <Select
+                                  value={bloodType || null}
+                                  onValueChange={(val) =>
+                                    setBloodType(val || "")
+                                  }
+                                  items={bloodTypeItems}
+                                >
+                                  <SelectTrigger className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface">
+                                    <SelectValue placeholder="Select Blood Type" />
+                                  </SelectTrigger>
+                                  <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
+                                    <SelectGroup>
+                                      {bloodTypeItems.map((item) => (
+                                        <SelectItem
+                                          key={item.value ?? "null"}
+                                          value={item.value ?? ""}
+                                        >
+                                          {item.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </Field>
+                              <Field>
+                                <FieldLabel
+                                  htmlFor="language"
+                                  className="font-label-caps text-label-caps text-on-surface-variant"
+                                >
+                                  Primary Language
+                                </FieldLabel>
+                                <Input
+                                  id="language"
+                                  placeholder="e.g., English, Japanese"
+                                  required
+                                  value={language}
+                                  onChange={(e) => setLanguage(e.target.value)}
+                                />
+                              </Field>
+                            </FieldGroup>
                           </div>
                         </div>
                       </div>
@@ -751,12 +812,18 @@ export default function PatientIntakePage() {
                             Medical History & Pre-existing Conditions
                           </h3>
                         </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <h4 className="font-label-caps text-primary text-xs uppercase mb-3 font-mono tracking-wider">
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <FieldSet>
+                            <FieldLegend
+                              variant="label"
+                              className="font-label-caps text-primary text-xs uppercase mb-1 font-mono tracking-wider"
+                            >
+                              Pre-existing Conditions
+                            </FieldLegend>
+                            <FieldDescription className="text-xs text-on-surface-variant">
                               Check all that apply
-                            </h4>
-                            <div className="space-y-3">
+                            </FieldDescription>
+                            <FieldGroup className="gap-3 mt-3">
                               {[
                                 "Hypertension",
                                 "Diabetes (Type I/II)",
@@ -765,27 +832,40 @@ export default function PatientIntakePage() {
                                 "Chronic Kidney Disease",
                                 "Thyroid Disorder",
                               ].map((cond) => (
-                                <label
+                                <Field
+                                  orientation="horizontal"
                                   key={cond}
-                                  className="flex items-center gap-3 cursor-pointer text-sm text-on-surface hover:text-white transition-colors"
+                                  className="items-center"
                                 >
-                                  <input
-                                    type="checkbox"
+                                  <Checkbox
+                                    id={`cond-${cond}`}
                                     checked={conditions.includes(cond)}
-                                    onChange={() => toggleCondition(cond)}
-                                    className="rounded border-outline bg-surface-container-low text-primary focus:ring-primary h-4 w-4"
+                                    onCheckedChange={() =>
+                                      toggleCondition(cond)
+                                    }
                                   />
-                                  {cond}
-                                </label>
+                                  <FieldLabel
+                                    htmlFor={`cond-${cond}`}
+                                    className="font-normal cursor-pointer text-sm text-on-surface hover:text-white transition-colors"
+                                  >
+                                    {cond}
+                                  </FieldLabel>
+                                </Field>
                               ))}
-                            </div>
-                          </div>
+                            </FieldGroup>
+                          </FieldSet>
 
-                          <div>
-                            <h4 className="font-label-caps text-primary text-xs uppercase mb-3 font-mono tracking-wider">
+                          <FieldSet>
+                            <FieldLegend
+                              variant="label"
+                              className="font-label-caps text-primary text-xs uppercase mb-1 font-mono tracking-wider"
+                            >
                               Allergies & Adverse Reactions
-                            </h4>
-                            <div className="space-y-3">
+                            </FieldLegend>
+                            <FieldDescription className="text-xs text-on-surface-variant">
+                              Check all that apply
+                            </FieldDescription>
+                            <FieldGroup className="gap-3 mt-3">
                               {[
                                 "Penicillin / Antibiotics",
                                 "Aspirin / NSAIDs",
@@ -794,21 +874,26 @@ export default function PatientIntakePage() {
                                 "Contrast Dye",
                                 "Peanuts / Food Allergies",
                               ].map((all) => (
-                                <label
+                                <Field
+                                  orientation="horizontal"
                                   key={all}
-                                  className="flex items-center gap-3 cursor-pointer text-sm text-on-surface hover:text-white transition-colors"
+                                  className="items-center"
                                 >
-                                  <input
-                                    type="checkbox"
+                                  <Checkbox
+                                    id={`all-${all}`}
                                     checked={allergies.includes(all)}
-                                    onChange={() => toggleAllergy(all)}
-                                    className="rounded border-outline bg-surface-container-low text-primary focus:ring-primary h-4 w-4"
+                                    onCheckedChange={() => toggleAllergy(all)}
                                   />
-                                  {all}
-                                </label>
+                                  <FieldLabel
+                                    htmlFor={`all-${all}`}
+                                    className="font-normal cursor-pointer text-sm text-on-surface hover:text-white transition-colors"
+                                  >
+                                    {all}
+                                  </FieldLabel>
+                                </Field>
                               ))}
-                            </div>
-                          </div>
+                            </FieldGroup>
+                          </FieldSet>
                         </div>
                       </div>
 
@@ -855,51 +940,53 @@ export default function PatientIntakePage() {
                             Insurance Policy Coverage
                           </h3>
                         </div>
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="provider"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Insurance Provider
-                            </label>
-                            <Input
-                              id="provider"
-                              placeholder="e.g. Nippon Life Insurance"
-                              required
-                              value={provider}
-                              onChange={(e) => setProvider(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label
-                              htmlFor="policyNum"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Policy / Member Number
-                            </label>
-                            <Input
-                              id="policyNum"
-                              placeholder="e.g. NL-9938-AA"
-                              required
-                              value={policyNum}
-                              onChange={(e) => setPolicyNum(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-2 md:col-span-2">
-                            <label
-                              htmlFor="groupNum"
-                              className="font-label-caps text-label-caps text-on-surface-variant"
-                            >
-                              Group Number
-                            </label>
-                            <Input
-                              id="groupNum"
-                              placeholder="e.g. GR-0042"
-                              value={groupNum}
-                              onChange={(e) => setGroupNum(e.target.value)}
-                            />
-                          </div>
+                        <div className="p-6">
+                          <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <Field>
+                              <FieldLabel
+                                htmlFor="provider"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Insurance Provider
+                              </FieldLabel>
+                              <Input
+                                id="provider"
+                                placeholder="e.g. Nippon Life Insurance"
+                                required
+                                value={provider}
+                                onChange={(e) => setProvider(e.target.value)}
+                              />
+                            </Field>
+                            <Field>
+                              <FieldLabel
+                                htmlFor="policyNum"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Policy / Member Number
+                              </FieldLabel>
+                              <Input
+                                id="policyNum"
+                                placeholder="e.g. NL-9938-AA"
+                                required
+                                value={policyNum}
+                                onChange={(e) => setPolicyNum(e.target.value)}
+                              />
+                            </Field>
+                            <Field className="md:col-span-2">
+                              <FieldLabel
+                                htmlFor="groupNum"
+                                className="font-label-caps text-label-caps text-on-surface-variant"
+                              >
+                                Group Number
+                              </FieldLabel>
+                              <Input
+                                id="groupNum"
+                                placeholder="e.g. GR-0042"
+                                value={groupNum}
+                                onChange={(e) => setGroupNum(e.target.value)}
+                              />
+                            </Field>
+                          </FieldGroup>
                         </div>
                       </div>
 

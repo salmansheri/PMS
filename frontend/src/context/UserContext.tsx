@@ -2,14 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import type React from "react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
-import { getAuthMe, postAuthLogin, postAuthLogout } from "@/client";
+import { createContext, useContext, useEffect } from "react";
+import { useAuthMe, useLogin, useLogout } from "@/hooks/api/use-auth";
 
 interface User {
   id: string;
@@ -31,63 +25,55 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
   const isPublicPage = pathname === "/login" || pathname === "/landing";
 
-  const refresh = useCallback(async () => {
-    try {
-      const { data } = await getAuthMe({ throwOnError: true });
-      setUser(data as User);
-    } catch {
-      setUser(null);
-      if (!isPublicPage) {
-        router.push("/login");
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [isPublicPage, router]);
+  const { data: user, isLoading, refetch } = useAuthMe();
+
+  const loginMutation = useLogin();
+  const logoutMutation = useLogout();
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    if (!user && !isLoading && !isPublicPage) {
+      router.push("/login");
+    }
+  }, [user, isLoading, isPublicPage, router]);
 
   const login = async (username: string, password: string) => {
-    setLoading(true);
     try {
-      const { data } = await postAuthLogin({
+      await loginMutation.mutateAsync({
         body: { username, password },
-        throwOnError: true,
       });
-      setUser(data as User);
       router.push("/");
     } catch (err) {
-      setUser(null);
       throw err;
-    } finally {
-      setLoading(false);
     }
   };
 
   const logout = async () => {
-    setLoading(true);
     try {
-      await postAuthLogout({ throwOnError: true });
+      await logoutMutation.mutateAsync({});
     } catch (err) {
       console.error("Logout request failed", err);
-    } finally {
-      setUser(null);
-      setLoading(false);
-      router.push("/login");
     }
   };
 
+  const refresh = async () => {
+    await refetch();
+  };
+
   return (
-    <UserContext.Provider value={{ user, loading, login, logout, refresh }}>
+    <UserContext.Provider
+      value={{
+        user: (user as User) || null,
+        loading: isLoading,
+        login,
+        logout,
+        refresh,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

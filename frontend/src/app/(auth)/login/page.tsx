@@ -4,8 +4,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useState } from "react";
-import { postAuthRegister } from "@/client";
+import { useRegister } from "@/hooks/api/use-auth";
 import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/ui/loading-state";
@@ -23,6 +24,7 @@ const simulatorStates = [
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useUser();
+  const registerMutation = useRegister();
   const [activeState, setActiveState] = useState<string>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -50,16 +52,14 @@ export default function LoginPage() {
     setActiveState("loading");
     try {
       // Direct registration call (Note: Requires ADMIN role context, will fail if not authorized)
-      await postAuthRegister({
+      await registerMutation.mutateAsync({
         body: {
           username: email,
           password,
           role: "ROLE_DOCTOR",
           fullName: name,
         },
-        throwOnError: true,
       });
-      alert("Staff node registration complete! Please log in.");
       setActiveState("login");
     } catch (err) {
       const error = err as Error;
@@ -152,39 +152,49 @@ export default function LoginPage() {
             >
               <GlassPanel className="p-8 border-primary/20 bg-surface-container-low/40 backdrop-blur-xl">
                 <form onSubmit={handleSignIn} className="space-y-5">
-                  <Input
-                    id="email"
-                    label="OPERATOR EMAIL"
-                    type="email"
-                    placeholder="e.g. sato@tokyoclinic.net"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label
-                        htmlFor="password"
-                        className="block font-label-caps text-on-surface-variant uppercase text-xs"
+                  <FieldGroup className="gap-5">
+                    <Field>
+                      <FieldLabel
+                        htmlFor="email"
+                        className="font-label-caps text-on-surface-variant uppercase text-xs"
                       >
-                        OPERATOR KEYCODE
-                      </label>
-                      <a
-                        href="/login#forgot"
-                        className="text-2xs text-primary hover:underline font-mono uppercase tracking-wider"
-                      >
-                        Forgot Key?
-                      </a>
-                    </div>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••••••"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
+                        OPERATOR EMAIL
+                      </FieldLabel>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="e.g. sato@tokyoclinic.net"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </Field>
+
+                    <Field>
+                      <div className="flex justify-between items-center mb-2">
+                        <FieldLabel
+                          htmlFor="password"
+                          className="font-label-caps text-on-surface-variant uppercase text-xs"
+                        >
+                          OPERATOR KEYCODE
+                        </FieldLabel>
+                        <a
+                          href="/login#forgot"
+                          className="text-2xs text-primary hover:underline font-mono uppercase tracking-wider"
+                        >
+                          Forgot Key?
+                        </a>
+                      </div>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••••••"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </Field>
+                  </FieldGroup>
 
                   <div className="pt-2">
                     <Button
@@ -224,33 +234,58 @@ export default function LoginPage() {
             >
               <GlassPanel className="p-8 border-secondary/20 bg-surface-container-low/40 backdrop-blur-xl">
                 <form onSubmit={handleSignUp} className="space-y-5">
-                  <Input
-                    id="name"
-                    label="OPERATOR NAME"
-                    type="text"
-                    placeholder="e.g. Kenji Sato"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                  <Input
-                    id="email-signup"
-                    label="EMAIL ADDRESS"
-                    type="email"
-                    placeholder="sato@tokyoclinic.net"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <Input
-                    id="password-signup"
-                    label="CREATE ACCESS KEYCODE"
-                    type="password"
-                    placeholder="••••••••••••"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+                  <FieldGroup className="gap-5">
+                    <Field>
+                      <FieldLabel
+                        htmlFor="name"
+                        className="font-label-caps text-on-surface-variant uppercase text-xs"
+                      >
+                        OPERATOR NAME
+                      </FieldLabel>
+                      <Input
+                        id="name"
+                        type="text"
+                        placeholder="e.g. Kenji Sato"
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                    </Field>
+
+                    <Field>
+                      <FieldLabel
+                        htmlFor="email-signup"
+                        className="font-label-caps text-on-surface-variant uppercase text-xs"
+                      >
+                        EMAIL ADDRESS
+                      </FieldLabel>
+                      <Input
+                        id="email-signup"
+                        type="email"
+                        placeholder="sato@tokyoclinic.net"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </Field>
+
+                    <Field>
+                      <FieldLabel
+                        htmlFor="password-signup"
+                        className="font-label-caps text-on-surface-variant uppercase text-xs"
+                      >
+                        CREATE ACCESS KEYCODE
+                      </FieldLabel>
+                      <Input
+                        id="password-signup"
+                        type="password"
+                        placeholder="••••••••••••"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </Field>
+                  </FieldGroup>
 
                   <div className="pt-2">
                     <Button
@@ -304,18 +339,20 @@ export default function LoginPage() {
                 </div>
 
                 <form onSubmit={handleMfaSubmit} className="space-y-6">
-                  <div className="flex justify-center gap-3">
-                    <Input
-                      id="mfaCode"
-                      type="text"
-                      maxLength={6}
-                      placeholder="e.g. 123456"
-                      required
-                      className="text-center tracking-[0.75em] text-lg font-mono placeholder:tracking-normal placeholder:font-sans py-3"
-                      value={mfaCode}
-                      onChange={(e) => setMfaCode(e.target.value)}
-                    />
-                  </div>
+                  <FieldGroup>
+                    <Field>
+                      <Input
+                        id="mfaCode"
+                        type="text"
+                        maxLength={6}
+                        placeholder="e.g. 123456"
+                        required
+                        className="text-center tracking-[0.75em] text-lg font-mono placeholder:tracking-normal placeholder:font-sans py-3"
+                        value={mfaCode}
+                        onChange={(e) => setMfaCode(e.target.value)}
+                      />
+                    </Field>
+                  </FieldGroup>
 
                   <Button
                     type="submit"

@@ -3,7 +3,9 @@
 import { AnimatePresence, motion } from "motion/react";
 import React, { useState } from "react";
 import { Button } from "../ui/button";
+import { Field, FieldGroup, FieldLabel } from "../ui/field";
 import { GlassPanel } from "../ui/glass-panel";
+import { Input } from "../ui/input";
 
 export interface Medication {
   id: string;
@@ -173,13 +175,18 @@ export const PrescriptionBuilder: React.FC<PrescriptionBuilderProps> = ({
             onSubmit={handleAddMed}
             className="pt-4 border-t border-outline-variant/30"
           >
-            <input
-              type="text"
-              placeholder="+ Add Medication"
-              value={newMedName}
-              onChange={(e) => setNewMedName(e.target.value)}
-              className="w-full bg-surface-container-lowest border border-dashed border-outline rounded-lg px-4 py-3 text-body-md focus:border-solid focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all pulse-border"
-            />
+            <FieldGroup>
+              <Field>
+                <FieldLabel className="sr-only">Add Medication</FieldLabel>
+                <Input
+                  type="text"
+                  placeholder="+ Add Medication"
+                  value={newMedName}
+                  onChange={(e) => setNewMedName(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-dashed border-outline rounded-lg px-4 py-3 text-body-md focus:border-solid focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all pulse-border"
+                />
+              </Field>
+            </FieldGroup>
           </form>
         )}
       </div>

@@ -4,8 +4,17 @@ import { motion } from "motion/react";
 import type React from "react";
 import { useState } from "react";
 import { Button } from "../ui/button";
+import { Field, FieldGroup, FieldLabel } from "../ui/field";
 import { GlassPanel } from "../ui/glass-panel";
-import { Select } from "../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 
 export interface IssueTokenFormProps {
   onIssueToken?: (data: {
@@ -74,95 +83,144 @@ export const IssueTokenForm: React.FC<IssueTokenFormProps> = ({
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 flex-1 flex flex-col relative z-10"
+        className="flex-1 flex flex-col relative z-10"
       >
-        {/* Select Patient */}
-        <div>
-          <Select
-            label="SELECT PATIENT"
-            options={patients}
-            value={patientId}
-            onChange={(e) => setPatientId(e.target.value)}
-            disabled={disabled}
-          />
-        </div>
-
-        {/* Assign Department */}
-        <div>
-          <Select
-            label="ASSIGN DEPARTMENT / DOCTOR"
-            options={doctors}
-            value={doctorDept}
-            onChange={(e) => setDoctorDept(e.target.value)}
-            disabled={disabled}
-          />
-        </div>
-
-        {/* Urgency Level */}
-        <div>
-          <span className="block font-label-caps text-on-surface-variant mb-2 uppercase text-xs">
-            URGENCY LEVEL
-          </span>
-          <div className="flex gap-4">
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => !disabled && setUrgency("Routine")}
-              className={`flex-1 py-3 px-4 rounded border text-sm font-semibold active:scale-95 transition-all duration-200 outline-none ${
-                disabled
-                  ? urgency === "Routine"
-                    ? "border-primary/30 bg-primary/5 text-primary/40 cursor-not-allowed"
-                    : "border-outline-variant/30 bg-surface-container/30 text-on-surface-variant/30 cursor-not-allowed"
-                  : urgency === "Routine"
-                    ? "border-primary bg-primary/10 text-primary shadow-[0_0_10px_rgba(212,187,255,0.2)] cursor-pointer"
-                    : "border-outline-variant bg-surface-container text-on-surface hover:border-primary/50 cursor-pointer"
-              }`}
+        <FieldGroup className="gap-6 flex-1 flex flex-col">
+          {/* Select Patient */}
+          <Field>
+            <FieldLabel
+              htmlFor="patient-select"
+              className="font-label-caps text-on-surface-variant text-xs uppercase"
             >
-              Routine
-            </button>
-            <button
-              type="button"
+              SELECT PATIENT
+            </FieldLabel>
+            <Select
+              value={patientId}
+              onValueChange={(val) => setPatientId(val || "")}
+              items={patients}
               disabled={disabled}
-              onClick={() => !disabled && setUrgency("Urgent")}
-              className={`flex-1 py-3 px-4 rounded border text-sm font-semibold active:scale-95 transition-all duration-200 outline-none ${
-                disabled
-                  ? urgency === "Urgent"
-                    ? "border-tertiary/30 bg-tertiary/5 text-tertiary/40 cursor-not-allowed"
-                    : "border-outline-variant/30 bg-surface-container/30 text-on-surface-variant/30 cursor-not-allowed"
-                  : urgency === "Urgent"
-                    ? "border-tertiary bg-tertiary/10 text-tertiary shadow-[0_0_15px_rgba(207,203,80,0.25)] cursor-pointer"
-                    : "border-outline-variant bg-surface-container text-on-surface hover:border-tertiary/50 cursor-pointer"
-              }`}
             >
-              Urgent
-            </button>
+              <SelectTrigger className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface">
+                <SelectValue placeholder="Search registered patients..." />
+              </SelectTrigger>
+              <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
+                <SelectGroup>
+                  {patients.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+
+          {/* Assign Department */}
+          <Field>
+            <FieldLabel
+              htmlFor="doctor-select"
+              className="font-label-caps text-on-surface-variant text-xs uppercase"
+            >
+              ASSIGN DEPARTMENT / DOCTOR
+            </FieldLabel>
+            <Select
+              value={doctorDept}
+              onValueChange={(val) => setDoctorDept(val || "")}
+              items={doctors}
+              disabled={disabled}
+            >
+              <SelectTrigger className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface">
+                <SelectValue placeholder="Select Doctor / Department..." />
+              </SelectTrigger>
+              <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
+                <SelectGroup>
+                  {doctors.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </Field>
+
+          {/* Urgency Level */}
+          <Field>
+            <FieldLabel
+              id="urgency-label"
+              className="font-label-caps text-on-surface-variant text-xs uppercase"
+            >
+              URGENCY LEVEL
+            </FieldLabel>
+            <ToggleGroup
+              aria-labelledby="urgency-label"
+              value={[urgency]}
+              onValueChange={(val) => {
+                if (val.length > 0) {
+                  setUrgency(val[0] as "Routine" | "Urgent");
+                }
+              }}
+              disabled={disabled}
+              className="w-full flex gap-4"
+            >
+              <ToggleGroupItem
+                value="Routine"
+                disabled={disabled}
+                className={`flex-1 h-auto py-3 px-4 rounded-lg border text-sm font-semibold active:scale-95 transition-all duration-200 outline-none hover:bg-transparent ${
+                  disabled
+                    ? urgency === "Routine"
+                      ? "border-primary/30 bg-primary/5 text-primary/40 cursor-not-allowed"
+                      : "border-outline-variant/30 bg-surface-container/30 text-on-surface-variant/30 cursor-not-allowed"
+                    : urgency === "Routine"
+                      ? "border-primary bg-primary/10 text-primary shadow-[0_0_10px_rgba(212,187,255,0.2)] cursor-pointer"
+                      : "border-outline-variant bg-surface-container text-on-surface hover:border-primary/50 cursor-pointer"
+                }`}
+              >
+                Routine
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="Urgent"
+                disabled={disabled}
+                className={`flex-1 h-auto py-3 px-4 rounded-lg border text-sm font-semibold active:scale-95 transition-all duration-200 outline-none hover:bg-transparent ${
+                  disabled
+                    ? urgency === "Urgent"
+                      ? "border-tertiary/30 bg-tertiary/5 text-tertiary/40 cursor-not-allowed"
+                      : "border-outline-variant/30 bg-surface-container/30 text-on-surface-variant/30 cursor-not-allowed"
+                    : urgency === "Urgent"
+                      ? "border-tertiary bg-tertiary/10 text-tertiary shadow-[0_0_15px_rgba(207,203,80,0.25)] cursor-pointer"
+                      : "border-outline-variant bg-surface-container text-on-surface hover:border-tertiary/50 cursor-pointer"
+                }`}
+              >
+                Urgent
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </Field>
+
+          {/* Submit Button */}
+          <div className="pt-8 mt-auto">
+            <Button
+              type="submit"
+              variant="primary"
+              glow={!disabled}
+              disabled={disabled}
+              className="w-full py-4 rounded-xl flex items-center justify-center gap-3 relative overflow-hidden group font-headline-md font-bold text-sm"
+            >
+              {!disabled && (
+                <motion.span
+                  animate={{ x: ["-100%", "200%"] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-[50%]"
+                />
+              )}
+              <span className="material-symbols-outlined relative z-10 text-lg">
+                print
+              </span>
+              <span className="relative z-10 font-mono uppercase tracking-wider">
+                {disabled ? "QUEUING OFFLINE" : "ISSUE TOKEN (GENERATE)"}
+              </span>
+            </Button>
           </div>
-        </div>
-
-        {/* Submit Button */}
-        <div className="pt-8 mt-auto">
-          <Button
-            type="submit"
-            variant="primary"
-            glow={!disabled}
-            disabled={disabled}
-            className="w-full py-4 rounded-xl flex items-center justify-center gap-3 relative overflow-hidden group font-headline-md font-bold text-sm"
-          >
-            {!disabled && (
-              <motion.span
-                animate={{ x: ["-100%", "200%"] }}
-                transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent w-[50%]"
-              />
-            )}
-            <span className="material-symbols-outlined relative z-10 text-lg">
-              print
-            </span>
-            <span className="relative z-10 font-mono uppercase tracking-wider">
-              {disabled ? "QUEUING OFFLINE" : "ISSUE TOKEN (GENERATE)"}
-            </span>
-          </Button>
-        </div>
+        </FieldGroup>
       </form>
 
       {/* Form Footer */}

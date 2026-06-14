@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import type React from "react";
 import { useState } from "react";
 import { useUser } from "@/context/UserContext";
-import { Input } from "../ui/input";
+import { Input } from "../ui/custom-input";
 
 export interface HeaderProps {
   avatarUrl?: string;
