@@ -1,12 +1,12 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   postQueueCheckInMutation,
   putQueueByIdCallMutation,
   putQueueByIdCompleteMutation,
 } from "@/client/@tanstack/react-query.gen";
-import { toast } from "sonner";
 
 export function useIssueToken() {
   const queryClient = useQueryClient();

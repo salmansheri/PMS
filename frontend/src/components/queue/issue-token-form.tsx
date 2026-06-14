@@ -1,10 +1,11 @@
 "use client";
 
+import { useForm } from "@tanstack/react-form";
 import { motion } from "motion/react";
 import type React from "react";
-import { useState } from "react";
+import { z } from "zod";
 import { Button } from "../ui/button";
-import { Field, FieldGroup, FieldLabel } from "../ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
 import { GlassPanel } from "../ui/glass-panel";
 import {
   Select,
@@ -25,26 +26,40 @@ export interface IssueTokenFormProps {
   disabled?: boolean;
 }
 
+const issueTokenSchema = z.object({
+  patientId: z
+    .string()
+    .min(1, "Patient is required")
+    .refine((val) => val !== "Search registered patients...", {
+      message: "Please select a registered patient",
+    }),
+  doctorDept: z.string().min(1, "Department/Doctor is required"),
+  urgency: z.enum(["Routine", "Urgent"]),
+});
+
 export const IssueTokenForm: React.FC<IssueTokenFormProps> = ({
   onIssueToken,
   disabled = false,
 }) => {
-  const [patientId, setPatientId] = useState("Search registered patients...");
-  const [doctorDept, setDoctorDept] = useState(
-    "General Medicine - Dr. S. Tanaka",
-  );
-  const [urgency, setUrgency] = useState<"Routine" | "Urgent">("Routine");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (onIssueToken) {
-      onIssueToken({ patientId, doctorDept, urgency });
-    } else {
-      alert(
-        `Issued token successfully!\nPatient: ${patientId}\nDept: ${doctorDept}\nUrgency: ${urgency}`,
-      );
-    }
-  };
+  const form = useForm({
+    defaultValues: {
+      patientId: "Search registered patients...",
+      doctorDept: "General Medicine - Dr. S. Tanaka",
+      urgency: "Routine" as "Routine" | "Urgent",
+    },
+    validators: {
+      onChange: issueTokenSchema,
+    },
+    onSubmit: async ({ value }) => {
+      if (onIssueToken) {
+        onIssueToken(value);
+      } else {
+        alert(
+          `Issued token successfully!\nPatient: ${value.patientId}\nDept: ${value.doctorDept}\nUrgency: ${value.urgency}`,
+        );
+      }
+    },
+  });
 
   const patients = [
     {
@@ -82,119 +97,164 @@ export const IssueTokenForm: React.FC<IssueTokenFormProps> = ({
       </p>
 
       <form
-        onSubmit={handleSubmit}
+        onSubmit={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          form.handleSubmit();
+        }}
         className="flex-1 flex flex-col relative z-10"
       >
         <FieldGroup className="gap-6 flex-1 flex flex-col">
           {/* Select Patient */}
-          <Field>
-            <FieldLabel
-              htmlFor="patient-select"
-              className="font-label-caps text-on-surface-variant text-xs uppercase"
-            >
-              SELECT PATIENT
-            </FieldLabel>
-            <Select
-              value={patientId}
-              onValueChange={(val) => setPatientId(val || "")}
-              items={patients}
-              disabled={disabled}
-            >
-              <SelectTrigger className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface">
-                <SelectValue placeholder="Search registered patients..." />
-              </SelectTrigger>
-              <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
-                <SelectGroup>
-                  {patients.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </Field>
+          <form.Field name="patientId">
+            {(field) => (
+              <Field data-invalid={field.state.meta.errors.length > 0}>
+                <FieldLabel
+                  htmlFor="patient-select"
+                  className="font-label-caps text-on-surface-variant text-xs uppercase"
+                >
+                  SELECT PATIENT
+                </FieldLabel>
+                <Select
+                  value={field.state.value}
+                  onValueChange={(val) => field.handleChange(val || "")}
+                  items={patients}
+                  disabled={disabled}
+                >
+                  <SelectTrigger
+                    id="patient-select"
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface"
+                  >
+                    <SelectValue placeholder="Search registered patients..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
+                    <SelectGroup>
+                      {patients.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {field.state.meta.errors.length > 0 && (
+                  <FieldError
+                    errors={field.state.meta.errors.map((err) => ({
+                      message: String(err),
+                    }))}
+                  />
+                )}
+              </Field>
+            )}
+          </form.Field>
 
           {/* Assign Department */}
-          <Field>
-            <FieldLabel
-              htmlFor="doctor-select"
-              className="font-label-caps text-on-surface-variant text-xs uppercase"
-            >
-              ASSIGN DEPARTMENT / DOCTOR
-            </FieldLabel>
-            <Select
-              value={doctorDept}
-              onValueChange={(val) => setDoctorDept(val || "")}
-              items={doctors}
-              disabled={disabled}
-            >
-              <SelectTrigger className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface">
-                <SelectValue placeholder="Select Doctor / Department..." />
-              </SelectTrigger>
-              <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
-                <SelectGroup>
-                  {doctors.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </Field>
+          <form.Field name="doctorDept">
+            {(field) => (
+              <Field data-invalid={field.state.meta.errors.length > 0}>
+                <FieldLabel
+                  htmlFor="doctor-select"
+                  className="font-label-caps text-on-surface-variant text-xs uppercase"
+                >
+                  ASSIGN DEPARTMENT / DOCTOR
+                </FieldLabel>
+                <Select
+                  value={field.state.value}
+                  onValueChange={(val) => field.handleChange(val || "")}
+                  items={doctors}
+                  disabled={disabled}
+                >
+                  <SelectTrigger
+                    id="doctor-select"
+                    aria-invalid={field.state.meta.errors.length > 0}
+                    className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface"
+                  >
+                    <SelectValue placeholder="Select Doctor / Department..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
+                    <SelectGroup>
+                      {doctors.map((item) => (
+                        <SelectItem key={item.value} value={item.value}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+                {field.state.meta.errors.length > 0 && (
+                  <FieldError
+                    errors={field.state.meta.errors.map((err) => ({
+                      message: String(err),
+                    }))}
+                  />
+                )}
+              </Field>
+            )}
+          </form.Field>
 
           {/* Urgency Level */}
-          <Field>
-            <FieldLabel
-              id="urgency-label"
-              className="font-label-caps text-on-surface-variant text-xs uppercase"
-            >
-              URGENCY LEVEL
-            </FieldLabel>
-            <ToggleGroup
-              aria-labelledby="urgency-label"
-              value={[urgency]}
-              onValueChange={(val) => {
-                if (val.length > 0) {
-                  setUrgency(val[0] as "Routine" | "Urgent");
-                }
-              }}
-              disabled={disabled}
-              className="w-full flex gap-4"
-            >
-              <ToggleGroupItem
-                value="Routine"
-                disabled={disabled}
-                className={`flex-1 h-auto py-3 px-4 rounded-lg border text-sm font-semibold active:scale-95 transition-all duration-200 outline-none hover:bg-transparent ${
-                  disabled
-                    ? urgency === "Routine"
-                      ? "border-primary/30 bg-primary/5 text-primary/40 cursor-not-allowed"
-                      : "border-outline-variant/30 bg-surface-container/30 text-on-surface-variant/30 cursor-not-allowed"
-                    : urgency === "Routine"
-                      ? "border-primary bg-primary/10 text-primary shadow-[0_0_10px_rgba(212,187,255,0.2)] cursor-pointer"
-                      : "border-outline-variant bg-surface-container text-on-surface hover:border-primary/50 cursor-pointer"
-                }`}
-              >
-                Routine
-              </ToggleGroupItem>
-              <ToggleGroupItem
-                value="Urgent"
-                disabled={disabled}
-                className={`flex-1 h-auto py-3 px-4 rounded-lg border text-sm font-semibold active:scale-95 transition-all duration-200 outline-none hover:bg-transparent ${
-                  disabled
-                    ? urgency === "Urgent"
-                      ? "border-tertiary/30 bg-tertiary/5 text-tertiary/40 cursor-not-allowed"
-                      : "border-outline-variant/30 bg-surface-container/30 text-on-surface-variant/30 cursor-not-allowed"
-                    : urgency === "Urgent"
-                      ? "border-tertiary bg-tertiary/10 text-tertiary shadow-[0_0_15px_rgba(207,203,80,0.25)] cursor-pointer"
-                      : "border-outline-variant bg-surface-container text-on-surface hover:border-tertiary/50 cursor-pointer"
-                }`}
-              >
-                Urgent
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </Field>
+          <form.Field name="urgency">
+            {(field) => (
+              <Field data-invalid={field.state.meta.errors.length > 0}>
+                <FieldLabel
+                  id="urgency-label"
+                  className="font-label-caps text-on-surface-variant text-xs uppercase"
+                >
+                  URGENCY LEVEL
+                </FieldLabel>
+                <ToggleGroup
+                  aria-labelledby="urgency-label"
+                  value={[field.state.value]}
+                  onValueChange={(val) => {
+                    if (val.length > 0) {
+                      field.handleChange(val[0] as "Routine" | "Urgent");
+                    }
+                  }}
+                  disabled={disabled}
+                  className="w-full flex gap-4"
+                >
+                  <ToggleGroupItem
+                    value="Routine"
+                    disabled={disabled}
+                    className={`flex-1 h-auto py-3 px-4 rounded-lg border text-sm font-semibold active:scale-95 transition-all duration-200 outline-none hover:bg-transparent ${
+                      disabled
+                        ? field.state.value === "Routine"
+                          ? "border-primary/30 bg-primary/5 text-primary/40 cursor-not-allowed"
+                          : "border-outline-variant/30 bg-surface-container/30 text-on-surface-variant/30 cursor-not-allowed"
+                        : field.state.value === "Routine"
+                          ? "border-primary bg-primary/10 text-primary shadow-[0_0_10px_rgba(212,187,255,0.2)] cursor-pointer"
+                          : "border-outline-variant bg-surface-container text-on-surface hover:border-primary/50 cursor-pointer"
+                    }`}
+                  >
+                    Routine
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="Urgent"
+                    disabled={disabled}
+                    className={`flex-1 h-auto py-3 px-4 rounded-lg border text-sm font-semibold active:scale-95 transition-all duration-200 outline-none hover:bg-transparent ${
+                      disabled
+                        ? field.state.value === "Urgent"
+                          ? "border-tertiary/30 bg-tertiary/5 text-tertiary/40 cursor-not-allowed"
+                          : "border-outline-variant/30 bg-surface-container/30 text-on-surface-variant/30 cursor-not-allowed"
+                        : field.state.value === "Urgent"
+                          ? "border-tertiary bg-tertiary/10 text-tertiary shadow-[0_0_15px_rgba(207,203,80,0.25)] cursor-pointer"
+                          : "border-outline-variant bg-surface-container text-on-surface hover:border-tertiary/50 cursor-pointer"
+                    }`}
+                  >
+                    Urgent
+                  </ToggleGroupItem>
+                </ToggleGroup>
+                {field.state.meta.errors.length > 0 && (
+                  <FieldError
+                    errors={field.state.meta.errors.map((err) => ({
+                      message: String(err),
+                    }))}
+                  />
+                )}
+              </Field>
+            )}
+          </form.Field>
 
           {/* Submit Button */}
           <div className="pt-8 mt-auto">

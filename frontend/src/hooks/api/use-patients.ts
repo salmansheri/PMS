@@ -1,12 +1,11 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  postPatientsMutation,
-  getPatientsSearchOptions,
-  getPatientsSearchQueryKey,
-} from "@/client/@tanstack/react-query.gen";
 import { toast } from "sonner";
+import {
+  getPatientsSearchOptions,
+  postPatientsMutation,
+} from "@/client/@tanstack/react-query.gen";
 
 export function useRegisterPatient() {
   const queryClient = useQueryClient();

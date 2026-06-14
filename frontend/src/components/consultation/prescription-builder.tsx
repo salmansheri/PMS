@@ -1,9 +1,11 @@
 "use client";
 
+import { useForm } from "@tanstack/react-form";
 import { AnimatePresence, motion } from "motion/react";
 import React, { useState } from "react";
+import { z } from "zod";
 import { Button } from "../ui/button";
-import { Field, FieldGroup, FieldLabel } from "../ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
 import { GlassPanel } from "../ui/glass-panel";
 import { Input } from "../ui/input";
 
@@ -43,10 +45,34 @@ export const PrescriptionBuilder: React.FC<PrescriptionBuilderProps> = ({
   const [meds, setMeds] = useState<Medication[]>(
     disabled ? [] : initialMedications,
   );
-  const [newMedName, setNewMedName] = useState("");
   const [activeId, setActiveId] = useState<string | null>(
     disabled ? null : "1",
   );
+
+  const form = useForm({
+    defaultValues: {
+      newMedName: "",
+    },
+    validators: {
+      onChange: z.object({
+        newMedName: z.string().min(1, "Name is required"),
+      }),
+    },
+    onSubmit: async ({ value }) => {
+      if (disabled || !value.newMedName.trim()) return;
+
+      const newMed: Medication = {
+        id: Date.now().toString(),
+        name: value.newMedName.trim(),
+        dosage: "1 Tablet Daily",
+        duration: "30 Days",
+      };
+
+      setMeds((prev) => [...prev, newMed]);
+      form.reset();
+      setActiveId(newMed.id);
+    },
+  });
 
   // Sync state if disabled prop changes
   React.useEffect(() => {
@@ -62,22 +88,6 @@ export const PrescriptionBuilder: React.FC<PrescriptionBuilderProps> = ({
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setMeds((prev) => prev.filter((m) => m.id !== id));
-  };
-
-  const handleAddMed = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (disabled || !newMedName.trim()) return;
-
-    const newMed: Medication = {
-      id: Date.now().toString(),
-      name: newMedName.trim(),
-      dosage: "1 Tablet Daily",
-      duration: "30 Days",
-    };
-
-    setMeds((prev) => [...prev, newMed]);
-    setNewMedName("");
-    setActiveId(newMed.id);
   };
 
   const handlePrescribeClick = () => {
@@ -172,20 +182,36 @@ export const PrescriptionBuilder: React.FC<PrescriptionBuilderProps> = ({
         {/* Add Medication Input */}
         {!disabled && (
           <form
-            onSubmit={handleAddMed}
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              form.handleSubmit();
+            }}
             className="pt-4 border-t border-outline-variant/30"
           >
             <FieldGroup>
-              <Field>
-                <FieldLabel className="sr-only">Add Medication</FieldLabel>
-                <Input
-                  type="text"
-                  placeholder="+ Add Medication"
-                  value={newMedName}
-                  onChange={(e) => setNewMedName(e.target.value)}
-                  className="w-full bg-surface-container-lowest border border-dashed border-outline rounded-lg px-4 py-3 text-body-md focus:border-solid focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all pulse-border"
-                />
-              </Field>
+              <form.Field name="newMedName">
+                {(field) => (
+                  <Field data-invalid={field.state.meta.errors.length > 0}>
+                    <FieldLabel className="sr-only">Add Medication</FieldLabel>
+                    <Input
+                      type="text"
+                      placeholder="+ Add Medication"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={field.state.meta.errors.length > 0}
+                      className="w-full bg-surface-container-lowest border border-dashed border-outline rounded-lg px-4 py-3 text-body-md focus:border-solid focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all pulse-border"
+                    />
+                    {field.state.meta.errors.length > 0 && (
+                      <FieldError
+                        errors={field.state.meta.errors.map((err) => ({
+                          message: String(err),
+                        }))}
+                      />
+                    )}
+                  </Field>
+                )}
+              </form.Field>
             </FieldGroup>
           </form>
         )}

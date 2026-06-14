@@ -3,7 +3,8 @@
 import { motion } from "motion/react";
 import type React from "react";
 import { useState } from "react";
-import { useUser } from "@/context/UserContext";
+import { useLogout } from "@/hooks/api/use-auth";
+import { useUserStore } from "@/store";
 import { Input } from "../ui/custom-input";
 
 export interface HeaderProps {
@@ -13,7 +14,8 @@ export interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   avatarUrl = "https://lh3.googleusercontent.com/aida-public/AB6AXuBwggfQNfOeo5Gn9aAWATXejpMWGmBvOCfC0gLaipOH91xADtKXxFoKGsv1KqNLt73XSTfROYXxJp31iWeGU80p9MYNq4EMCgUIyWWJBIh5hbmRM55_AwM2QJFuK0tnWplVdlOtGOKfGNkaRAZbbWJsjX70_JGZFLhVU7FMnlHJCOT82vdKMnO-XPgIcTIgwYfjzXGoQBLRZtDb-M6bmIKejIa8YeAxX48aBAALurnkBVrzjmrIcplAOg8hP7CGaJyUoAorQRmDbw79",
 }) => {
-  const { user, logout } = useUser();
+  const user = useUserStore((state) => state.user);
+  const logoutMutation = useLogout();
   const [search, setSearch] = useState("");
 
   const doctorName = user?.fullName || "Guest Operator";
@@ -61,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
           </motion.button>
           <motion.button
             type="button"
-            onClick={logout}
+            onClick={() => logoutMutation.mutate({})}
             whileHover={{ scale: 1.1, color: "#ff7f7f" }}
             whileTap={{ scale: 0.95 }}
             className="material-symbols-outlined cursor-pointer hover:drop-shadow-[0_0_8px_rgba(255,127,127,0.5)] outline-none"

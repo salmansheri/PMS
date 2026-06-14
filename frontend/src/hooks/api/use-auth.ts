@@ -1,15 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
+  getAuthMeOptions,
+  getAuthMeQueryKey,
   postAuthLoginMutation,
   postAuthLogoutMutation,
   postAuthRegisterMutation,
-  getAuthMeOptions,
-  getAuthMeQueryKey,
 } from "@/client/@tanstack/react-query.gen";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 export function useLogin() {
   const queryClient = useQueryClient();

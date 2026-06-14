@@ -1,15 +1,15 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useForm } from "@tanstack/react-form";
 import { AnimatePresence, motion } from "motion/react";
-import type React from "react";
 import { useState } from "react";
-import { useRegisterPatient } from "@/hooks/api/use-patients";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -29,6 +29,7 @@ import {
 import { StateController } from "@/components/ui/state-controller";
 import { SystemAlertBanner } from "@/components/ui/system-alert-banner";
 import { Textarea } from "@/components/ui/textarea";
+import { useRegisterPatient } from "@/hooks/api/use-patients";
 
 const genderItems = [
   { label: "Select Gender...", value: null },
@@ -68,73 +69,127 @@ const simulatorStates = [
   { value: "alert", label: "System Alert", icon: "warning" },
 ];
 
+const registerPatientSchema = z.object({
+  name: z.string().min(1, "Full legal name is required"),
+  dob: z.string().min(1, "Date of birth is required"),
+  gender: z.string().min(1, "Gender selection is required"),
+  ssn: z.string().min(1, "Social security number/National ID is required"),
+  nationality: z.string().min(1, "Nationality is required"),
+  phone: z.string().min(1, "Phone number is required"),
+  email: z.string().min(1, "Email is required").email("Invalid email format"),
+  address: z.string().min(1, "Home address is required"),
+  emergencyName: z.string().min(1, "Emergency contact name is required"),
+  emergencyRelation: z.string().min(1, "Relationship is required"),
+  emergencyPhone: z.string().min(1, "Emergency phone number is required"),
+  bloodType: z.string(),
+  language: z.string().min(1, "Primary language is required"),
+  conditions: z.array(z.string()),
+  allergies: z.array(z.string()),
+  provider: z.string().min(1, "Insurance provider is required"),
+  policyNum: z.string().min(1, "Policy number is required"),
+  groupNum: z.string(),
+});
+
 export default function PatientIntakePage() {
   const registerPatientMutation = useRegisterPatient();
   const [activeState, setActiveState] = useState<string>("intake_form");
   const [step, setStep] = useState(1);
-
-  // Form states - Step 1: Personal & Contact
-  const [name, setName] = useState("");
-  const [dob, setDob] = useState("");
-  const [gender, setGender] = useState("");
-  const [ssn, setSsn] = useState("");
-  const [nationality, setNationality] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-
-  // Emergency Contact & Baseline
-  const [emergencyName, setEmergencyName] = useState("");
-  const [emergencyRelation, setEmergencyRelation] = useState("");
-  const [emergencyPhone, setEmergencyPhone] = useState("");
-  const [bloodType, setBloodType] = useState("");
-  const [language, setLanguage] = useState("");
-
-  // Step 2: Medical History
-  const [conditions, setConditions] = useState<string[]>([]);
-  const [allergies, setAllergies] = useState<string[]>([]);
-
-  // Step 3: Insurance
-  const [provider, setProvider] = useState("");
-  const [policyNum, setPolicyNum] = useState("");
-  const [groupNum, setGroupNum] = useState("");
   const [registeredPatientId, setRegisteredPatientId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setActiveState("loading");
-    try {
-      const formattedGender = gender ? gender.toUpperCase() : "OTHER";
-      const patient = await registerPatientMutation.mutateAsync({
-        body: {
-          name,
-          dateOfBirth: dob,
-          gender: formattedGender,
-          ssn,
-          phone,
-          email,
-          bloodType: bloodType || "O_POSITIVE",
-          emergencyContactName: emergencyName,
-          emergencyContactPhone: emergencyPhone,
-        },
-      });
-      setRegisteredPatientId(
-        patient.id
-          ? `TC-${patient.id.substring(0, 8).toUpperCase()}`
-          : "TC-SUCCESS",
-      );
-      setActiveState("success");
-    } catch (err) {
-      const error = err as Error;
-      setErrorMessage(
-        error.message || "INTAKE TRANS-ENCRYPTION SYNCHRONIZATION FAILURE",
-      );
-      setActiveState("alert");
-    }
-  };
+  const form = useForm({
+    defaultValues: {
+      name: "",
+      dob: "",
+      gender: "",
+      ssn: "",
+      nationality: "",
+      phone: "",
+      email: "",
+      address: "",
+      emergencyName: "",
+      emergencyRelation: "",
+      emergencyPhone: "",
+      bloodType: "",
+      language: "",
+      conditions: [] as string[],
+      allergies: [] as string[],
+      provider: "",
+      policyNum: "",
+      groupNum: "",
+    },
+    validators: {
+      onChange: registerPatientSchema,
+    },
+    onSubmit: async ({ value }) => {
+      setActiveState("loading");
+      try {
+        const formattedGender = value.gender
+          ? value.gender.toUpperCase()
+          : "OTHER";
+        const patient = await registerPatientMutation.mutateAsync({
+          body: {
+            name: value.name,
+            dateOfBirth: value.dob,
+            gender: formattedGender,
+            ssn: value.ssn,
+            phone: value.phone,
+            email: value.email,
+            bloodType: value.bloodType || "O_POSITIVE",
+            emergencyContactName: value.emergencyName,
+            emergencyContactPhone: value.emergencyPhone,
+          },
+        });
+        setRegisteredPatientId(
+          patient.id
+            ? `TC-${patient.id.substring(0, 8).toUpperCase()}`
+            : "TC-SUCCESS",
+        );
+        setActiveState("success");
+      } catch (err) {
+        const error = err as Error;
+        setErrorMessage(
+          error.message || "INTAKE TRANS-ENCRYPTION SYNCHRONIZATION FAILURE",
+        );
+        setActiveState("alert");
+      }
+    },
+  });
 
-  const nextStep = () => {
+  const handleNextStep = async () => {
+    if (step === 1) {
+      await form.validate("change");
+      const fields = [
+        "name",
+        "dob",
+        "gender",
+        "ssn",
+        "nationality",
+        "phone",
+        "email",
+        "address",
+        "emergencyName",
+        "emergencyRelation",
+        "emergencyPhone",
+        "language",
+      ] as const;
+
+      const hasErrors = fields.some(
+        (f) => (form.getFieldMeta(f)?.errors?.length ?? 0) > 0,
+      );
+      if (hasErrors) {
+        return;
+      }
+    } else if (step === 3) {
+      await form.validate("change");
+      const fields = ["provider", "policyNum"] as const;
+      const hasErrors = fields.some(
+        (f) => (form.getFieldMeta(f)?.errors?.length ?? 0) > 0,
+      );
+      if (hasErrors) {
+        return;
+      }
+    }
     setStep((prev) => Math.min(prev + 1, 4));
   };
 
@@ -143,42 +198,11 @@ export default function PatientIntakePage() {
   };
 
   const resetIntake = () => {
-    setName("");
-    setDob("");
-    setGender("");
-    setSsn("");
-    setNationality("");
-    setPhone("");
-    setEmail("");
-    setAddress("");
-    setEmergencyName("");
-    setEmergencyRelation("");
-    setEmergencyPhone("");
-    setBloodType("");
-    setLanguage("");
-    setConditions([]);
-    setAllergies([]);
-    setProvider("");
-    setPolicyNum("");
-    setGroupNum("");
+    form.reset();
     setRegisteredPatientId("");
     setErrorMessage("");
     setStep(1);
     setActiveState("intake_form");
-  };
-
-  const toggleCondition = (cond: string) => {
-    setConditions((prev) =>
-      prev.includes(cond) ? prev.filter((c) => c !== cond) : [...prev, cond],
-    );
-  };
-
-  const toggleAllergy = (allergy: string) => {
-    setAllergies((prev) =>
-      prev.includes(allergy)
-        ? prev.filter((a) => a !== allergy)
-        : [...prev, allergy],
-    );
   };
 
   if (activeState === "loading") {
@@ -304,10 +328,11 @@ export default function PatientIntakePage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-sans font-bold text-on-surface text-base">
-                        {name || "Jane Doe"}
+                        {form.state.values.name || "Jane Doe"}
                       </p>
                       <p className="text-2xs text-on-surface-variant font-mono uppercase mt-0.5">
-                        DOB: {dob || "1994-10-27"} • BLOOD: {bloodType || "O+"}
+                        DOB: {form.state.values.dob || "1994-10-27"} • BLOOD:{" "}
+                        {form.state.values.bloodType || "O+"}
                       </p>
                     </div>
                     <div className="text-right">
@@ -453,7 +478,14 @@ export default function PatientIntakePage() {
               </GlassPanel>
 
               {/* Form Content */}
-              <form onSubmit={handleRegister} className="space-y-8">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  form.handleSubmit();
+                }}
+                className="space-y-8"
+              >
                 <AnimatePresence mode="wait">
                   {step === 1 && (
                     <motion.div
@@ -475,95 +507,209 @@ export default function PatientIntakePage() {
                         </div>
                         <div className="p-6">
                           <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Field>
-                              <FieldLabel
-                                htmlFor="name"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Full Legal Name
-                              </FieldLabel>
-                              <Input
-                                id="name"
-                                placeholder="e.g., Jane Doe"
-                                required
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                              />
-                            </Field>
-                            <Field>
-                              <FieldLabel
-                                htmlFor="dob"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Date of Birth
-                              </FieldLabel>
-                              <Input
-                                id="dob"
-                                type="date"
-                                required
-                                value={dob}
-                                onChange={(e) => setDob(e.target.value)}
-                              />
-                            </Field>
-                            <Field>
-                              <FieldLabel
-                                htmlFor="gender"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Gender
-                              </FieldLabel>
-                              <Select
-                                value={gender || null}
-                                onValueChange={(val) => setGender(val || "")}
-                                items={genderItems}
-                              >
-                                <SelectTrigger className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface">
-                                  <SelectValue placeholder="Select Gender" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
-                                  <SelectGroup>
-                                    {genderItems.map((item) => (
-                                      <SelectItem
-                                        key={item.value ?? "null"}
-                                        value={item.value ?? ""}
-                                      >
-                                        {item.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectGroup>
-                                </SelectContent>
-                              </Select>
-                            </Field>
-                            <Field>
-                              <FieldLabel
-                                htmlFor="ssn"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Social Security Number / National ID
-                              </FieldLabel>
-                              <Input
-                                id="ssn"
-                                placeholder="e.g. XXX-XX-XXXX"
-                                required
-                                value={ssn}
-                                onChange={(e) => setSsn(e.target.value)}
-                              />
-                            </Field>
-                            <Field className="md:col-span-2">
-                              <FieldLabel
-                                htmlFor="nationality"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Nationality
-                              </FieldLabel>
-                              <Input
-                                id="nationality"
-                                placeholder="e.g., Japanese"
-                                required
-                                value={nationality}
-                                onChange={(e) => setNationality(e.target.value)}
-                              />
-                            </Field>
+                            <form.Field name="name">
+                              {(field) => (
+                                <Field
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="name"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Full Legal Name
+                                  </FieldLabel>
+                                  <Input
+                                    id="name"
+                                    placeholder="e.g., Jane Doe"
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
+
+                            <form.Field name="dob">
+                              {(field) => (
+                                <Field
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="dob"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Date of Birth
+                                  </FieldLabel>
+                                  <Input
+                                    id="dob"
+                                    type="date"
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
+
+                            <form.Field name="gender">
+                              {(field) => (
+                                <Field
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="gender"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Gender
+                                  </FieldLabel>
+                                  <Select
+                                    value={field.state.value || null}
+                                    onValueChange={(val) =>
+                                      field.handleChange(val || "")
+                                    }
+                                    items={genderItems}
+                                  >
+                                    <SelectTrigger
+                                      id="gender"
+                                      aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                      }
+                                      className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface"
+                                    >
+                                      <SelectValue placeholder="Select Gender" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
+                                      <SelectGroup>
+                                        {genderItems.map((item) => (
+                                          <SelectItem
+                                            key={item.value ?? "null"}
+                                            value={item.value ?? ""}
+                                          >
+                                            {item.label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectGroup>
+                                    </SelectContent>
+                                  </Select>
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
+
+                            <form.Field name="ssn">
+                              {(field) => (
+                                <Field
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="ssn"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Social Security Number / National ID
+                                  </FieldLabel>
+                                  <Input
+                                    id="ssn"
+                                    placeholder="e.g. XXX-XX-XXXX"
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
+
+                            <form.Field name="nationality">
+                              {(field) => (
+                                <Field
+                                  className="md:col-span-2"
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="nationality"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Nationality
+                                  </FieldLabel>
+                                  <Input
+                                    id="nationality"
+                                    placeholder="e.g., Japanese"
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
                           </FieldGroup>
                         </div>
                       </div>
@@ -580,55 +726,121 @@ export default function PatientIntakePage() {
                         </div>
                         <div className="p-6">
                           <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Field>
-                              <FieldLabel
-                                htmlFor="phone"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Phone Number
-                              </FieldLabel>
-                              <Input
-                                id="phone"
-                                type="tel"
-                                placeholder="+1 (555) 000-0000"
-                                required
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                              />
-                            </Field>
-                            <Field>
-                              <FieldLabel
-                                htmlFor="email"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Email Address
-                              </FieldLabel>
-                              <Input
-                                id="email"
-                                type="email"
-                                placeholder="patient@example.com"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                              />
-                            </Field>
-                            <Field className="md:col-span-2">
-                              <FieldLabel
-                                htmlFor="address"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Home Address
-                              </FieldLabel>
-                              <Textarea
-                                id="address"
-                                className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface"
-                                placeholder="Full residential address..."
-                                rows={2}
-                                required
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                              />
-                            </Field>
+                            <form.Field name="phone">
+                              {(field) => (
+                                <Field
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="phone"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Phone Number
+                                  </FieldLabel>
+                                  <Input
+                                    id="phone"
+                                    type="tel"
+                                    placeholder="+1 (555) 000-0000"
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
+
+                            <form.Field name="email">
+                              {(field) => (
+                                <Field
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="email"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Email Address
+                                  </FieldLabel>
+                                  <Input
+                                    id="email"
+                                    type="email"
+                                    placeholder="patient@example.com"
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
+
+                            <form.Field name="address">
+                              {(field) => (
+                                <Field
+                                  className="md:col-span-2"
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="address"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Home Address
+                                  </FieldLabel>
+                                  <Textarea
+                                    id="address"
+                                    className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface"
+                                    placeholder="Full residential address..."
+                                    rows={2}
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
                           </FieldGroup>
                         </div>
                       </div>
@@ -646,59 +858,118 @@ export default function PatientIntakePage() {
                           </div>
                           <div className="p-6">
                             <FieldGroup className="flex flex-col gap-4">
-                              <Field>
-                                <FieldLabel
-                                  htmlFor="emergencyName"
-                                  className="font-label-caps text-label-caps text-on-surface-variant"
-                                >
-                                  Contact Name
-                                </FieldLabel>
-                                <Input
-                                  id="emergencyName"
-                                  placeholder="e.g., John Doe"
-                                  required
-                                  value={emergencyName}
-                                  onChange={(e) =>
-                                    setEmergencyName(e.target.value)
-                                  }
-                                />
-                              </Field>
+                              <form.Field name="emergencyName">
+                                {(field) => (
+                                  <Field
+                                    data-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  >
+                                    <FieldLabel
+                                      htmlFor="emergencyName"
+                                      className="font-label-caps text-label-caps text-on-surface-variant"
+                                    >
+                                      Contact Name
+                                    </FieldLabel>
+                                    <Input
+                                      id="emergencyName"
+                                      placeholder="e.g., John Doe"
+                                      value={field.state.value}
+                                      onChange={(e) =>
+                                        field.handleChange(e.target.value)
+                                      }
+                                      aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                      }
+                                    />
+                                    {field.state.meta.errors.length > 0 && (
+                                      <FieldError
+                                        errors={field.state.meta.errors.map(
+                                          (err) => ({
+                                            message: String(err),
+                                          }),
+                                        )}
+                                      />
+                                    )}
+                                  </Field>
+                                )}
+                              </form.Field>
+
                               <div className="grid grid-cols-2 gap-4">
-                                <Field>
-                                  <FieldLabel
-                                    htmlFor="emergencyRelation"
-                                    className="font-label-caps text-label-caps text-on-surface-variant"
-                                  >
-                                    Relationship
-                                  </FieldLabel>
-                                  <Input
-                                    id="emergencyRelation"
-                                    placeholder="e.g., Spouse"
-                                    required
-                                    value={emergencyRelation}
-                                    onChange={(e) =>
-                                      setEmergencyRelation(e.target.value)
-                                    }
-                                  />
-                                </Field>
-                                <Field>
-                                  <FieldLabel
-                                    htmlFor="emergencyPhone"
-                                    className="font-label-caps text-label-caps text-on-surface-variant"
-                                  >
-                                    Phone
-                                  </FieldLabel>
-                                  <Input
-                                    id="emergencyPhone"
-                                    type="tel"
-                                    placeholder="555-0199"
-                                    required
-                                    value={emergencyPhone}
-                                    onChange={(e) =>
-                                      setEmergencyPhone(e.target.value)
-                                    }
-                                  />
-                                </Field>
+                                <form.Field name="emergencyRelation">
+                                  {(field) => (
+                                    <Field
+                                      data-invalid={
+                                        field.state.meta.errors.length > 0
+                                      }
+                                    >
+                                      <FieldLabel
+                                        htmlFor="emergencyRelation"
+                                        className="font-label-caps text-label-caps text-on-surface-variant"
+                                      >
+                                        Relationship
+                                      </FieldLabel>
+                                      <Input
+                                        id="emergencyRelation"
+                                        placeholder="e.g., Spouse"
+                                        value={field.state.value}
+                                        onChange={(e) =>
+                                          field.handleChange(e.target.value)
+                                        }
+                                        aria-invalid={
+                                          field.state.meta.errors.length > 0
+                                        }
+                                      />
+                                      {field.state.meta.errors.length > 0 && (
+                                        <FieldError
+                                          errors={field.state.meta.errors.map(
+                                            (err) => ({
+                                              message: String(err),
+                                            }),
+                                          )}
+                                        />
+                                      )}
+                                    </Field>
+                                  )}
+                                </form.Field>
+
+                                <form.Field name="emergencyPhone">
+                                  {(field) => (
+                                    <Field
+                                      data-invalid={
+                                        field.state.meta.errors.length > 0
+                                      }
+                                    >
+                                      <FieldLabel
+                                        htmlFor="emergencyPhone"
+                                        className="font-label-caps text-label-caps text-on-surface-variant"
+                                      >
+                                        Phone
+                                      </FieldLabel>
+                                      <Input
+                                        id="emergencyPhone"
+                                        type="tel"
+                                        placeholder="555-0199"
+                                        value={field.state.value}
+                                        onChange={(e) =>
+                                          field.handleChange(e.target.value)
+                                        }
+                                        aria-invalid={
+                                          field.state.meta.errors.length > 0
+                                        }
+                                      />
+                                      {field.state.meta.errors.length > 0 && (
+                                        <FieldError
+                                          errors={field.state.meta.errors.map(
+                                            (err) => ({
+                                              message: String(err),
+                                            }),
+                                          )}
+                                        />
+                                      )}
+                                    </Field>
+                                  )}
+                                </form.Field>
                               </div>
                             </FieldGroup>
                           </div>
@@ -715,59 +986,104 @@ export default function PatientIntakePage() {
                           </div>
                           <div className="p-6">
                             <FieldGroup className="flex flex-col gap-4">
-                              <Field>
-                                <FieldLabel
-                                  htmlFor="bloodType"
-                                  className="font-label-caps text-label-caps text-on-surface-variant"
-                                >
-                                  Blood Type
-                                </FieldLabel>
-                                <Select
-                                  value={bloodType || null}
-                                  onValueChange={(val) =>
-                                    setBloodType(val || "")
-                                  }
-                                  items={bloodTypeItems}
-                                >
-                                  <SelectTrigger className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface">
-                                    <SelectValue placeholder="Select Blood Type" />
-                                  </SelectTrigger>
-                                  <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
-                                    <SelectGroup>
-                                      {bloodTypeItems.map((item) => (
-                                        <SelectItem
-                                          key={item.value ?? "null"}
-                                          value={item.value ?? ""}
-                                        >
-                                          {item.label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </Select>
-                              </Field>
-                              <Field>
-                                <FieldLabel
-                                  htmlFor="language"
-                                  className="font-label-caps text-label-caps text-on-surface-variant"
-                                >
-                                  Primary Language
-                                </FieldLabel>
-                                <Input
-                                  id="language"
-                                  placeholder="e.g., English, Japanese"
-                                  required
-                                  value={language}
-                                  onChange={(e) => setLanguage(e.target.value)}
-                                />
-                              </Field>
+                              <form.Field name="bloodType">
+                                {(field) => (
+                                  <Field
+                                    data-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  >
+                                    <FieldLabel
+                                      htmlFor="bloodType"
+                                      className="font-label-caps text-label-caps text-on-surface-variant"
+                                    >
+                                      Blood Type
+                                    </FieldLabel>
+                                    <Select
+                                      value={field.state.value || null}
+                                      onValueChange={(val) =>
+                                        field.handleChange(val || "")
+                                      }
+                                      items={bloodTypeItems}
+                                    >
+                                      <SelectTrigger
+                                        id="bloodType"
+                                        aria-invalid={
+                                          field.state.meta.errors.length > 0
+                                        }
+                                        className="w-full bg-[#1a1c23]/50 border-outline-variant/30 text-on-surface"
+                                      >
+                                        <SelectValue placeholder="Select Blood Type" />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-[#24283b] border border-outline-variant text-on-surface">
+                                        <SelectGroup>
+                                          {bloodTypeItems.map((item) => (
+                                            <SelectItem
+                                              key={item.value ?? "null"}
+                                              value={item.value ?? ""}
+                                            >
+                                              {item.label}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectGroup>
+                                      </SelectContent>
+                                    </Select>
+                                    {field.state.meta.errors.length > 0 && (
+                                      <FieldError
+                                        errors={field.state.meta.errors.map(
+                                          (err) => ({
+                                            message: String(err),
+                                          }),
+                                        )}
+                                      />
+                                    )}
+                                  </Field>
+                                )}
+                              </form.Field>
+
+                              <form.Field name="language">
+                                {(field) => (
+                                  <Field
+                                    data-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  >
+                                    <FieldLabel
+                                      htmlFor="language"
+                                      className="font-label-caps text-label-caps text-on-surface-variant"
+                                    >
+                                      Primary Language
+                                    </FieldLabel>
+                                    <Input
+                                      id="language"
+                                      placeholder="e.g., English, Japanese"
+                                      value={field.state.value}
+                                      onChange={(e) =>
+                                        field.handleChange(e.target.value)
+                                      }
+                                      aria-invalid={
+                                        field.state.meta.errors.length > 0
+                                      }
+                                    />
+                                    {field.state.meta.errors.length > 0 && (
+                                      <FieldError
+                                        errors={field.state.meta.errors.map(
+                                          (err) => ({
+                                            message: String(err),
+                                          }),
+                                        )}
+                                      />
+                                    )}
+                                  </Field>
+                                )}
+                              </form.Field>
                             </FieldGroup>
                           </div>
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center justify-end space-x-4 pt-6 border-t border-outline-variant">
+                      <div className="flex items-center justify-end gap-4 pt-6 border-t border-outline-variant">
                         <Button
                           type="button"
                           variant="secondary"
@@ -784,7 +1100,7 @@ export default function PatientIntakePage() {
                           variant="primary"
                           glow
                           className="font-mono text-xs uppercase tracking-wider"
-                          onClick={nextStep}
+                          onClick={handleNextStep}
                         >
                           Continue
                           <span className="material-symbols-outlined text-sm ml-2">
@@ -813,92 +1129,118 @@ export default function PatientIntakePage() {
                           </h3>
                         </div>
                         <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-                          <FieldSet>
-                            <FieldLegend
-                              variant="label"
-                              className="font-label-caps text-primary text-xs uppercase mb-1 font-mono tracking-wider"
-                            >
-                              Pre-existing Conditions
-                            </FieldLegend>
-                            <FieldDescription className="text-xs text-on-surface-variant">
-                              Check all that apply
-                            </FieldDescription>
-                            <FieldGroup className="gap-3 mt-3">
-                              {[
-                                "Hypertension",
-                                "Diabetes (Type I/II)",
-                                "Asthma / COPD",
-                                "Coronary Artery Disease",
-                                "Chronic Kidney Disease",
-                                "Thyroid Disorder",
-                              ].map((cond) => (
-                                <Field
-                                  orientation="horizontal"
-                                  key={cond}
-                                  className="items-center"
+                          <form.Field name="conditions">
+                            {(field) => (
+                              <FieldSet>
+                                <FieldLegend
+                                  variant="label"
+                                  className="font-label-caps text-primary text-xs uppercase mb-1 font-mono tracking-wider"
                                 >
-                                  <Checkbox
-                                    id={`cond-${cond}`}
-                                    checked={conditions.includes(cond)}
-                                    onCheckedChange={() =>
-                                      toggleCondition(cond)
-                                    }
-                                  />
-                                  <FieldLabel
-                                    htmlFor={`cond-${cond}`}
-                                    className="font-normal cursor-pointer text-sm text-on-surface hover:text-white transition-colors"
-                                  >
-                                    {cond}
-                                  </FieldLabel>
-                                </Field>
-                              ))}
-                            </FieldGroup>
-                          </FieldSet>
+                                  Pre-existing Conditions
+                                </FieldLegend>
+                                <FieldDescription className="text-xs text-on-surface-variant">
+                                  Check all that apply
+                                </FieldDescription>
+                                <FieldGroup className="gap-3 mt-3">
+                                  {[
+                                    "Hypertension",
+                                    "Diabetes (Type I/II)",
+                                    "Asthma / COPD",
+                                    "Coronary Artery Disease",
+                                    "Chronic Kidney Disease",
+                                    "Thyroid Disorder",
+                                  ].map((cond) => (
+                                    <Field
+                                      orientation="horizontal"
+                                      key={cond}
+                                      className="items-center"
+                                    >
+                                      <Checkbox
+                                        id={`cond-${cond}`}
+                                        checked={field.state.value.includes(
+                                          cond,
+                                        )}
+                                        onCheckedChange={() => {
+                                          const nextVal =
+                                            field.state.value.includes(cond)
+                                              ? field.state.value.filter(
+                                                  (c) => c !== cond,
+                                                )
+                                              : [...field.state.value, cond];
+                                          field.handleChange(nextVal);
+                                        }}
+                                      />
+                                      <FieldLabel
+                                        htmlFor={`cond-${cond}`}
+                                        className="font-normal cursor-pointer text-sm text-on-surface hover:text-white transition-colors"
+                                      >
+                                        {cond}
+                                      </FieldLabel>
+                                    </Field>
+                                  ))}
+                                </FieldGroup>
+                              </FieldSet>
+                            )}
+                          </form.Field>
 
-                          <FieldSet>
-                            <FieldLegend
-                              variant="label"
-                              className="font-label-caps text-primary text-xs uppercase mb-1 font-mono tracking-wider"
-                            >
-                              Allergies & Adverse Reactions
-                            </FieldLegend>
-                            <FieldDescription className="text-xs text-on-surface-variant">
-                              Check all that apply
-                            </FieldDescription>
-                            <FieldGroup className="gap-3 mt-3">
-                              {[
-                                "Penicillin / Antibiotics",
-                                "Aspirin / NSAIDs",
-                                "Sulfa Drugs",
-                                "Latex",
-                                "Contrast Dye",
-                                "Peanuts / Food Allergies",
-                              ].map((all) => (
-                                <Field
-                                  orientation="horizontal"
-                                  key={all}
-                                  className="items-center"
+                          <form.Field name="allergies">
+                            {(field) => (
+                              <FieldSet>
+                                <FieldLegend
+                                  variant="label"
+                                  className="font-label-caps text-primary text-xs uppercase mb-1 font-mono tracking-wider"
                                 >
-                                  <Checkbox
-                                    id={`all-${all}`}
-                                    checked={allergies.includes(all)}
-                                    onCheckedChange={() => toggleAllergy(all)}
-                                  />
-                                  <FieldLabel
-                                    htmlFor={`all-${all}`}
-                                    className="font-normal cursor-pointer text-sm text-on-surface hover:text-white transition-colors"
-                                  >
-                                    {all}
-                                  </FieldLabel>
-                                </Field>
-                              ))}
-                            </FieldGroup>
-                          </FieldSet>
+                                  Allergies & Adverse Reactions
+                                </FieldLegend>
+                                <FieldDescription className="text-xs text-on-surface-variant">
+                                  Check all that apply
+                                </FieldDescription>
+                                <FieldGroup className="gap-3 mt-3">
+                                  {[
+                                    "Penicillin / Antibiotics",
+                                    "Aspirin / NSAIDs",
+                                    "Sulfa Drugs",
+                                    "Latex",
+                                    "Contrast Dye",
+                                    "Peanuts / Food Allergies",
+                                  ].map((all) => (
+                                    <Field
+                                      orientation="horizontal"
+                                      key={all}
+                                      className="items-center"
+                                    >
+                                      <Checkbox
+                                        id={`all-${all}`}
+                                        checked={field.state.value.includes(
+                                          all,
+                                        )}
+                                        onCheckedChange={() => {
+                                          const nextVal =
+                                            field.state.value.includes(all)
+                                              ? field.state.value.filter(
+                                                  (a) => a !== all,
+                                                )
+                                              : [...field.state.value, all];
+                                          field.handleChange(nextVal);
+                                        }}
+                                      />
+                                      <FieldLabel
+                                        htmlFor={`all-${all}`}
+                                        className="font-normal cursor-pointer text-sm text-on-surface hover:text-white transition-colors"
+                                      >
+                                        {all}
+                                      </FieldLabel>
+                                    </Field>
+                                  ))}
+                                </FieldGroup>
+                              </FieldSet>
+                            )}
+                          </form.Field>
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center justify-end space-x-4 pt-6 border-t border-outline-variant">
+                      <div className="flex items-center justify-end gap-4 pt-6 border-t border-outline-variant">
                         <Button
                           type="button"
                           variant="ghost"
@@ -912,7 +1254,7 @@ export default function PatientIntakePage() {
                           variant="primary"
                           glow
                           className="font-mono text-xs uppercase tracking-wider"
-                          onClick={nextStep}
+                          onClick={handleNextStep}
                         >
                           Continue
                           <span className="material-symbols-outlined text-sm ml-2">
@@ -942,56 +1284,123 @@ export default function PatientIntakePage() {
                         </div>
                         <div className="p-6">
                           <FieldGroup className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Field>
-                              <FieldLabel
-                                htmlFor="provider"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Insurance Provider
-                              </FieldLabel>
-                              <Input
-                                id="provider"
-                                placeholder="e.g. Nippon Life Insurance"
-                                required
-                                value={provider}
-                                onChange={(e) => setProvider(e.target.value)}
-                              />
-                            </Field>
-                            <Field>
-                              <FieldLabel
-                                htmlFor="policyNum"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Policy / Member Number
-                              </FieldLabel>
-                              <Input
-                                id="policyNum"
-                                placeholder="e.g. NL-9938-AA"
-                                required
-                                value={policyNum}
-                                onChange={(e) => setPolicyNum(e.target.value)}
-                              />
-                            </Field>
-                            <Field className="md:col-span-2">
-                              <FieldLabel
-                                htmlFor="groupNum"
-                                className="font-label-caps text-label-caps text-on-surface-variant"
-                              >
-                                Group Number
-                              </FieldLabel>
-                              <Input
-                                id="groupNum"
-                                placeholder="e.g. GR-0042"
-                                value={groupNum}
-                                onChange={(e) => setGroupNum(e.target.value)}
-                              />
-                            </Field>
+                            <form.Field name="provider">
+                              {(field) => (
+                                <Field
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="provider"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Insurance Provider
+                                  </FieldLabel>
+                                  <Input
+                                    id="provider"
+                                    placeholder="e.g. Nippon Life Insurance"
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
+
+                            <form.Field name="policyNum">
+                              {(field) => (
+                                <Field
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="policyNum"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Policy / Member Number
+                                  </FieldLabel>
+                                  <Input
+                                    id="policyNum"
+                                    placeholder="e.g. NL-9938-AA"
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
+
+                            <form.Field name="groupNum">
+                              {(field) => (
+                                <Field
+                                  className="md:col-span-2"
+                                  data-invalid={
+                                    field.state.meta.errors.length > 0
+                                  }
+                                >
+                                  <FieldLabel
+                                    htmlFor="groupNum"
+                                    className="font-label-caps text-label-caps text-on-surface-variant"
+                                  >
+                                    Group Number
+                                  </FieldLabel>
+                                  <Input
+                                    id="groupNum"
+                                    placeholder="e.g. GR-0042"
+                                    value={field.state.value}
+                                    onChange={(e) =>
+                                      field.handleChange(e.target.value)
+                                    }
+                                    aria-invalid={
+                                      field.state.meta.errors.length > 0
+                                    }
+                                  />
+                                  {field.state.meta.errors.length > 0 && (
+                                    <FieldError
+                                      errors={field.state.meta.errors.map(
+                                        (err) => ({
+                                          message: String(err),
+                                        }),
+                                      )}
+                                    />
+                                  )}
+                                </Field>
+                              )}
+                            </form.Field>
                           </FieldGroup>
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center justify-end space-x-4 pt-6 border-t border-outline-variant">
+                      <div className="flex items-center justify-end gap-4 pt-6 border-t border-outline-variant">
                         <Button
                           type="button"
                           variant="ghost"
@@ -1005,7 +1414,7 @@ export default function PatientIntakePage() {
                           variant="primary"
                           glow
                           className="font-mono text-xs uppercase tracking-wider"
-                          onClick={nextStep}
+                          onClick={handleNextStep}
                         >
                           Continue
                           <span className="material-symbols-outlined text-sm ml-2">
@@ -1040,7 +1449,7 @@ export default function PatientIntakePage() {
                                 Patient Name
                               </p>
                               <p className="font-bold text-on-surface mt-1">
-                                {name || "Jane Doe"}
+                                {form.state.values.name || "Jane Doe"}
                               </p>
                             </div>
                             <div>
@@ -1048,7 +1457,8 @@ export default function PatientIntakePage() {
                                 DOB / Gender
                               </p>
                               <p className="text-on-surface mt-1 font-mono uppercase">
-                                {dob || "1994-10-27"} • {gender || "female"}
+                                {form.state.values.dob || "1994-10-27"} •{" "}
+                                {form.state.values.gender || "female"}
                               </p>
                             </div>
                             <div>
@@ -1056,8 +1466,10 @@ export default function PatientIntakePage() {
                                 Phone / Email
                               </p>
                               <p className="text-on-surface mt-1 font-mono">
-                                {phone || "+1 (555) 000-0000"} •{" "}
-                                {email || "patient@example.com"}
+                                {form.state.values.phone || "+1 (555) 000-0000"}{" "}
+                                •{" "}
+                                {form.state.values.email ||
+                                  "patient@example.com"}
                               </p>
                             </div>
                             <div>
@@ -1065,8 +1477,8 @@ export default function PatientIntakePage() {
                                 SSN / Nationality
                               </p>
                               <p className="text-on-surface mt-1 font-mono">
-                                {ssn || "XXX-XX-XXXX"} •{" "}
-                                {nationality || "Japanese"}
+                                {form.state.values.ssn || "XXX-XX-XXXX"} •{" "}
+                                {form.state.values.nationality || "Japanese"}
                               </p>
                             </div>
                           </div>
@@ -1077,11 +1489,14 @@ export default function PatientIntakePage() {
                                 Emergency Contact
                               </p>
                               <p className="text-on-surface mt-1 font-bold">
-                                {emergencyName || "John Doe"} (
-                                {emergencyRelation || "Spouse"})
+                                {form.state.values.emergencyName || "John Doe"}{" "}
+                                (
+                                {form.state.values.emergencyRelation ||
+                                  "Spouse"}
+                                )
                               </p>
                               <p className="text-2xs text-on-surface-variant font-mono mt-0.5">
-                                {emergencyPhone || "555-0199"}
+                                {form.state.values.emergencyPhone || "555-0199"}
                               </p>
                             </div>
                             <div>
@@ -1091,9 +1506,10 @@ export default function PatientIntakePage() {
                               <p className="text-on-surface mt-1">
                                 Blood Type:{" "}
                                 <span className="font-mono font-bold text-secondary">
-                                  {bloodType || "O+"}
+                                  {form.state.values.bloodType || "O+"}
                                 </span>{" "}
-                                • Lang: {language || "English"}
+                                • Lang:{" "}
+                                {form.state.values.language || "English"}
                               </p>
                             </div>
                           </div>
@@ -1104,8 +1520,8 @@ export default function PatientIntakePage() {
                                 Pre-existing Conditions
                               </p>
                               <div className="flex flex-wrap gap-1.5 mt-1">
-                                {conditions.length > 0 ? (
-                                  conditions.map((c) => (
+                                {form.state.values.conditions.length > 0 ? (
+                                  form.state.values.conditions.map((c) => (
                                     <span
                                       key={c}
                                       className="text-2xs bg-primary/10 border border-primary/20 text-primary px-2 py-0.5 rounded font-bold font-mono uppercase"
@@ -1125,8 +1541,8 @@ export default function PatientIntakePage() {
                                 Allergies
                               </p>
                               <div className="flex flex-wrap gap-1.5 mt-1">
-                                {allergies.length > 0 ? (
-                                  allergies.map((a) => (
+                                {form.state.values.allergies.length > 0 ? (
+                                  form.state.values.allergies.map((a) => (
                                     <span
                                       key={a}
                                       className="text-2xs bg-error/10 border border-error/20 text-error px-2 py-0.5 rounded font-bold font-mono uppercase"
@@ -1148,18 +1564,20 @@ export default function PatientIntakePage() {
                               Insurance Cover
                             </p>
                             <p className="text-on-surface mt-1 font-bold">
-                              {provider || "Nippon Life Insurance"}
+                              {form.state.values.provider ||
+                                "Nippon Life Insurance"}
                             </p>
                             <p className="text-2xs text-on-surface-variant font-mono mt-0.5">
-                              Policy: {policyNum || "NL-9938-AA"} • Group:{" "}
-                              {groupNum || "GR-0042"}
+                              Policy:{" "}
+                              {form.state.values.policyNum || "NL-9938-AA"} •
+                              Group: {form.state.values.groupNum || "GR-0042"}
                             </p>
                           </div>
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center justify-end space-x-4 pt-6 border-t border-outline-variant">
+                      <div className="flex items-center justify-end gap-4 pt-6 border-t border-outline-variant">
                         <Button
                           type="button"
                           variant="ghost"
