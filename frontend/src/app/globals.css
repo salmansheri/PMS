@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", var(--font-geist-sans), sans-serif;
+  --font-mono: "JetBrains Mono", var(--font-geist-mono), monospace;
+
+  /* Tokyo Night Palette overrides */
+  --color-background: #151218;
+  --color-foreground: #e7e0e9;
+
+  --color-primary: #d4bbff;
+  --color-primary-container: #bb9af7;
+  --color-secondary: #7fd0ff;
+  --color-secondary-container: #0075a1;
+  --color-tertiary: #cfcb50;
+  --color-tertiary-container: #b3af37;
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-success: #9ece6a;
+
+  --color-surface: #151218;
+  --color-surface-dim: #151218;
+  --color-surface-bright: #3b383e;
+
+  --color-surface-container: #211e24;
+  --color-surface-container-low: #1d1a20;
+  --color-surface-container-lowest: #0f0d13;
+  --color-surface-container-high: #2c292f;
+  --color-surface-container-highest: #37343a;
+
+  --color-outline: #958e9c;
+  --color-outline-variant: #4a4550;
+  --color-on-surface: #e7e0e9;
+  --color-on-surface-variant: #ccc3d2;
+}
+
+/* Base resets & utilities */
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+.glass-panel {
+  background: rgba(33, 30, 36, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid #2f3549;
+}
+
+.surface-card {
+  background-color: var(--color-surface-container);
+  border: 1px solid #2f3549;
+}
+
+.input-tech {
+  background-color: #1a1b26;
+  border: 2px solid #565f89;
+  border-radius: 4px;
+  color: #e7e0e9;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.input-tech:hover:not(:focus):not(:disabled) {
+  border-color: #7dcfff;
+}
+
+.input-tech:focus {
+  border-color: #bb9af7;
+  box-shadow:
+    0 0 0 4px rgba(187, 154, 247, 0.2),
+    0 0 12px rgba(187, 154, 247, 0.4);
+  outline: none;
+}
+
+.input-tech:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.neon-glow-primary {
+  box-shadow: 0px 0px 12px rgba(187, 154, 247, 0.15);
+}
+
+.neon-glow-secondary {
+  box-shadow: 0px 0px 12px rgba(127, 208, 255, 0.15);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #4a4550;
+  border-radius: 10px;
+}
+
+/* Material symbols vertical alignment override */
+.material-symbols-outlined {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+  vertical-align: middle;
+}

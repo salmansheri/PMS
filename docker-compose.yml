@@ -1,0 +1,163 @@
+services:
+  # ========================================================
+  # Database Service (PostgreSQL 17)
+  # ========================================================
+  postgres:
+    image: postgres:17-alpine
+    container_name: pms-postgres
+    environment:
+      POSTGRES_DB: pms
+      POSTGRES_USER: pmsuser
+      POSTGRES_PASSWORD: pmspassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pmsuser -d pms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  # ========================================================
+  # Caching Service (Redis 7)
+  # ========================================================
+  redis:
+    image: redis:7-alpine
+    container_name: pms-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - pms-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+
+  # ========================================================
+  # Message Broker (RabbitMQ 4 with Management UI)
+  # ========================================================
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: pms-rabbitmq
+    ports:
+      - "5672:5672"     # AMQP Port
+      - "15672:15672"   # Management Dashboard Port
+    environment:
+      RABBITMQ_DEFAULT_USER: pmsuser
+      RABBITMQ_DEFAULT_PASS: pmspassword
+    networks:
+      - pms-network
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+  # ========================================================
+  # Backend REST API (Spring Boot 4 / Java 26)
+  # ========================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pms-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/pms
+      - SPRING_DATASOURCE_USERNAME=pmsuser
+      - SPRING_DATASOURCE_PASSWORD=pmspassword
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=pmsuser
+      - SPRING_RABBITMQ_PASSWORD=pmspassword
+    volumes:
+      # Mount host logs folder to persist diagnostic & audit logs
+      - ./backend/logs:/app/logs
+    networks:
+      - pms-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  # ========================================================
+  # Frontend Application (Next.js Standalone Runner)
+  # ========================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pms-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - BACKEND_API_URL=http://backend:8080
+    networks:
+      - pms-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+
+# ========================================================
+# Networks & Volumes Configuration
+# ========================================================
+networks:
+  pms-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

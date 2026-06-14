@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: backend
+
+  # ==========================================
+  # Database Configuration (PostgreSQL)
+  # ==========================================
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pms}
+    username: ${SPRING_DATASOURCE_USERNAME:pmsuser}
+    password: ${SPRING_DATASOURCE_PASSWORD:pmspassword}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_DDL_AUTO:update}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+
+  # ==========================================
+  # Caching Configuration (Redis)
+  # ==========================================
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 60000
+
+  # ==========================================
+  # Message Broker Configuration (RabbitMQ)
+  # ==========================================
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:pmsuser}
+    password: ${SPRING_RABBITMQ_PASSWORD:pmspassword}
+
+# ==========================================
+# Server Configuration
+# ==========================================
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# ==========================================
+# Security JWT Config Properties (Custom)
+# ==========================================
+pms:
+  security:
+    jwt:
+      # Secret key (Base64 encoded for hs256, minimum 256 bits)
+      secret: ${JWT_SECRET:dG9reW9jbGluaWNvc3Btc2JhY2tlbmRzZWNyZXJrZXlzdHJpbmc2Nzg5MA==}
+      expiration-ms: ${JWT_EXPIRATION_MS:86400000} # 24 hours
+      cookie-name: token
+
+# ==========================================
+# Logging Levels Config
+# ==========================================
+logging:
+  level:
+    root: INFO
+    dev.salman.backend: DEBUG
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN
