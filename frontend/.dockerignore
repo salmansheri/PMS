@@ -11,10 +11,6 @@ Dockerfile
 docker-compose.yml
 docker-compose.yaml
 README.md
-pnpm-lock.yaml
 pnpm-workspace.yaml
 biome.json
-postcss.config.mjs
-tailwind.config.ts
-tsconfig.json
 next-env.d.ts
