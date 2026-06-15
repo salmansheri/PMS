@@ -4,18 +4,13 @@ import { type DefaultError, queryOptions, type UseMutationOptions } from '@tanst
 import type { AxiosError } from 'axios';
 
 import { client } from '../client.gen';
-import { getAppointmentsDoctorByDoctorId, getAuthMe, getDoctors, getPatientsById, getPatientsByIdRecords, getPatientsSearch, getQueueDoctorByDoctorId, type Options, postAppointments, postAuthLogin, postAuthLogout, postAuthRegister, postPatients, postPatientsByIdRecords, postQueueCheckIn, putAppointmentsByIdStatus, putPatientsById, putQueueByIdCall, putQueueByIdComplete } from '../sdk.gen';
-import type { GetAppointmentsDoctorByDoctorIdData, GetAppointmentsDoctorByDoctorIdResponse, GetAuthMeData, GetAuthMeResponse, GetDoctorsData, GetDoctorsResponse, GetPatientsByIdData, GetPatientsByIdRecordsData, GetPatientsByIdRecordsResponse, GetPatientsByIdResponse, GetPatientsSearchData, GetPatientsSearchResponse, GetQueueDoctorByDoctorIdData, GetQueueDoctorByDoctorIdResponse, PostAppointmentsData, PostAppointmentsResponse, PostAuthLoginData, PostAuthLoginResponse, PostAuthLogoutData, PostAuthRegisterData, PostAuthRegisterError, PostAuthRegisterResponse, PostPatientsByIdRecordsData, PostPatientsByIdRecordsResponse, PostPatientsData, PostPatientsResponse, PostQueueCheckInData, PostQueueCheckInResponse, PutAppointmentsByIdStatusData, PutAppointmentsByIdStatusResponse, PutPatientsByIdData, PutPatientsByIdResponse, PutQueueByIdCallData, PutQueueByIdCallResponse, PutQueueByIdCompleteData, PutQueueByIdCompleteResponse } from '../types.gen';
+import { addMedicalRecord, bookAppointment, callPatient, checkIn, completeConsultation, getCurrentUser, getDoctorAppointments, getDoctorQueue, getDoctors, getMedicalRecords, getPatientAppointments, getPatientById, getUnreadNotifications, login, logout, markAllAsRead, type Options, register, registerPatient, searchPatients, subscribe, updateAppointmentStatus, updatePatient } from '../sdk.gen';
+import type { AddMedicalRecordData, AddMedicalRecordResponse, BookAppointmentData, BookAppointmentResponse, CallPatientData, CallPatientResponse, CheckInData, CheckInResponse, CompleteConsultationData, CompleteConsultationResponse, GetCurrentUserData, GetCurrentUserResponse, GetDoctorAppointmentsData, GetDoctorAppointmentsResponse, GetDoctorQueueData, GetDoctorQueueResponse, GetDoctorsData, GetDoctorsResponse, GetMedicalRecordsData, GetMedicalRecordsResponse, GetPatientAppointmentsData, GetPatientAppointmentsResponse, GetPatientByIdData, GetPatientByIdResponse, GetUnreadNotificationsData, GetUnreadNotificationsResponse, LoginData, LoginResponse, LogoutData, MarkAllAsReadData, RegisterData, RegisterPatientData, RegisterPatientResponse, RegisterResponse, SearchPatientsData, SearchPatientsResponse, SubscribeData, SubscribeResponse, UpdateAppointmentStatusData, UpdateAppointmentStatusResponse, UpdatePatientData, UpdatePatientResponse } from '../types.gen';
 
-/**
- * Authenticate Operator Node
- *
- * Verifies staff credentials and returns a secure HttpOnly session cookie containing the JWT.
- */
-export const postAuthLoginMutation = (options?: Partial<Options<PostAuthLoginData>>): UseMutationOptions<PostAuthLoginResponse, AxiosError<DefaultError>, Options<PostAuthLoginData>> => {
-    const mutationOptions: UseMutationOptions<PostAuthLoginResponse, AxiosError<DefaultError>, Options<PostAuthLoginData>> = {
+export const completeConsultationMutation = (options?: Partial<Options<CompleteConsultationData>>): UseMutationOptions<CompleteConsultationResponse, AxiosError<DefaultError>, Options<CompleteConsultationData>> => {
+    const mutationOptions: UseMutationOptions<CompleteConsultationResponse, AxiosError<DefaultError>, Options<CompleteConsultationData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await postAuthLogin({
+            const { data } = await completeConsultation({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -26,34 +21,10 @@ export const postAuthLoginMutation = (options?: Partial<Options<PostAuthLoginDat
     return mutationOptions;
 };
 
-/**
- * Terminate Session
- *
- * Evicts the JWT cookie and publishes a logout event to the audit trail.
- */
-export const postAuthLogoutMutation = (options?: Partial<Options<PostAuthLogoutData>>): UseMutationOptions<unknown, AxiosError<DefaultError>, Options<PostAuthLogoutData>> => {
-    const mutationOptions: UseMutationOptions<unknown, AxiosError<DefaultError>, Options<PostAuthLogoutData>> = {
+export const callPatientMutation = (options?: Partial<Options<CallPatientData>>): UseMutationOptions<CallPatientResponse, AxiosError<DefaultError>, Options<CallPatientData>> => {
+    const mutationOptions: UseMutationOptions<CallPatientResponse, AxiosError<DefaultError>, Options<CallPatientData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await postAuthLogout({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-/**
- * Register Staff Node
- *
- * Creates a new clinic staff account. Restricted to ROLE_ADMIN.
- */
-export const postAuthRegisterMutation = (options?: Partial<Options<PostAuthRegisterData>>): UseMutationOptions<PostAuthRegisterResponse, AxiosError<PostAuthRegisterError>, Options<PostAuthRegisterData>> => {
-    const mutationOptions: UseMutationOptions<PostAuthRegisterResponse, AxiosError<PostAuthRegisterError>, Options<PostAuthRegisterData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await postAuthRegister({
+            const { data } = await callPatient({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -97,16 +68,11 @@ const createQueryKey = <TOptions extends Options>(id: string, options?: TOptions
     return [params];
 };
 
-export const getAuthMeQueryKey = (options?: Options<GetAuthMeData>) => createQueryKey('getAuthMe', options);
+export const getPatientByIdQueryKey = (options: Options<GetPatientByIdData>) => createQueryKey('getPatientById', options);
 
-/**
- * Get Current Profile
- *
- * Returns details of the currently authenticated operator.
- */
-export const getAuthMeOptions = (options?: Options<GetAuthMeData>) => queryOptions<GetAuthMeResponse, AxiosError<DefaultError>, GetAuthMeResponse, ReturnType<typeof getAuthMeQueryKey>>({
+export const getPatientByIdOptions = (options: Options<GetPatientByIdData>) => queryOptions<GetPatientByIdResponse, AxiosError<DefaultError>, GetPatientByIdResponse, ReturnType<typeof getPatientByIdQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getAuthMe({
+        const { data } = await getPatientById({
             ...options,
             ...queryKey[0],
             signal,
@@ -114,18 +80,13 @@ export const getAuthMeOptions = (options?: Options<GetAuthMeData>) => queryOptio
         });
         return data;
     },
-    queryKey: getAuthMeQueryKey(options)
+    queryKey: getPatientByIdQueryKey(options)
 });
 
-/**
- * Register Patient (Intake)
- *
- * Performs patient intake and demographic registration. SSN is automatically masked.
- */
-export const postPatientsMutation = (options?: Partial<Options<PostPatientsData>>): UseMutationOptions<PostPatientsResponse, AxiosError<DefaultError>, Options<PostPatientsData>> => {
-    const mutationOptions: UseMutationOptions<PostPatientsResponse, AxiosError<DefaultError>, Options<PostPatientsData>> = {
+export const updatePatientMutation = (options?: Partial<Options<UpdatePatientData>>): UseMutationOptions<UpdatePatientResponse, AxiosError<DefaultError>, Options<UpdatePatientData>> => {
+    const mutationOptions: UseMutationOptions<UpdatePatientResponse, AxiosError<DefaultError>, Options<UpdatePatientData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await postPatients({
+            const { data } = await updatePatient({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -136,35 +97,10 @@ export const postPatientsMutation = (options?: Partial<Options<PostPatientsData>
     return mutationOptions;
 };
 
-export const getPatientsByIdQueryKey = (options: Options<GetPatientsByIdData>) => createQueryKey('getPatientsById', options);
-
-/**
- * Get Patient Details
- *
- * Retrieves demographic details. Cached in Redis for 1 hour.
- */
-export const getPatientsByIdOptions = (options: Options<GetPatientsByIdData>) => queryOptions<GetPatientsByIdResponse, AxiosError<DefaultError>, GetPatientsByIdResponse, ReturnType<typeof getPatientsByIdQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getPatientsById({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getPatientsByIdQueryKey(options)
-});
-
-/**
- * Update Patient Profile
- *
- * Updates details and evicts the corresponding Redis patient cache entry.
- */
-export const putPatientsByIdMutation = (options?: Partial<Options<PutPatientsByIdData>>): UseMutationOptions<PutPatientsByIdResponse, AxiosError<DefaultError>, Options<PutPatientsByIdData>> => {
-    const mutationOptions: UseMutationOptions<PutPatientsByIdResponse, AxiosError<DefaultError>, Options<PutPatientsByIdData>> = {
+export const updateAppointmentStatusMutation = (options?: Partial<Options<UpdateAppointmentStatusData>>): UseMutationOptions<UpdateAppointmentStatusResponse, AxiosError<DefaultError>, Options<UpdateAppointmentStatusData>> => {
+    const mutationOptions: UseMutationOptions<UpdateAppointmentStatusResponse, AxiosError<DefaultError>, Options<UpdateAppointmentStatusData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await putPatientsById({
+            const { data } = await updateAppointmentStatus({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -175,55 +111,10 @@ export const putPatientsByIdMutation = (options?: Partial<Options<PutPatientsByI
     return mutationOptions;
 };
 
-export const getPatientsSearchQueryKey = (options: Options<GetPatientsSearchData>) => createQueryKey('getPatientsSearch', options);
-
-/**
- * Search Patients
- *
- * Performs case-insensitive search by patient name.
- */
-export const getPatientsSearchOptions = (options: Options<GetPatientsSearchData>) => queryOptions<GetPatientsSearchResponse, AxiosError<DefaultError>, GetPatientsSearchResponse, ReturnType<typeof getPatientsSearchQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getPatientsSearch({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getPatientsSearchQueryKey(options)
-});
-
-export const getPatientsByIdRecordsQueryKey = (options: Options<GetPatientsByIdRecordsData>) => createQueryKey('getPatientsByIdRecords', options);
-
-/**
- * Get Patient Consultation History
- *
- * Retrieves all consultation records for the patient, ordered by date descending. Restricted to ROLE_DOCTOR, ROLE_ADMIN.
- */
-export const getPatientsByIdRecordsOptions = (options: Options<GetPatientsByIdRecordsData>) => queryOptions<GetPatientsByIdRecordsResponse, AxiosError<DefaultError>, GetPatientsByIdRecordsResponse, ReturnType<typeof getPatientsByIdRecordsQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getPatientsByIdRecords({
-            ...options,
-            ...queryKey[0],
-            signal,
-            throwOnError: true
-        });
-        return data;
-    },
-    queryKey: getPatientsByIdRecordsQueryKey(options)
-});
-
-/**
- * Add Medical Record
- *
- * Appends a consultation record. Custom assessments/vitals are sent in a dynamic JSON structure. Restricted to ROLE_DOCTOR, ROLE_ADMIN.
- */
-export const postPatientsByIdRecordsMutation = (options?: Partial<Options<PostPatientsByIdRecordsData>>): UseMutationOptions<PostPatientsByIdRecordsResponse, AxiosError<DefaultError>, Options<PostPatientsByIdRecordsData>> => {
-    const mutationOptions: UseMutationOptions<PostPatientsByIdRecordsResponse, AxiosError<DefaultError>, Options<PostPatientsByIdRecordsData>> = {
+export const checkInMutation = (options?: Partial<Options<CheckInData>>): UseMutationOptions<CheckInResponse, AxiosError<DefaultError>, Options<CheckInData>> => {
+    const mutationOptions: UseMutationOptions<CheckInResponse, AxiosError<DefaultError>, Options<CheckInData>> = {
         mutationFn: async (fnOptions) => {
-            const { data } = await postPatientsByIdRecords({
+            const { data } = await checkIn({
                 ...options,
                 ...fnOptions,
                 throwOnError: true
@@ -233,14 +124,182 @@ export const postPatientsByIdRecordsMutation = (options?: Partial<Options<PostPa
     };
     return mutationOptions;
 };
+
+export const registerPatientMutation = (options?: Partial<Options<RegisterPatientData>>): UseMutationOptions<RegisterPatientResponse, AxiosError<DefaultError>, Options<RegisterPatientData>> => {
+    const mutationOptions: UseMutationOptions<RegisterPatientResponse, AxiosError<DefaultError>, Options<RegisterPatientData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await registerPatient({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getMedicalRecordsQueryKey = (options: Options<GetMedicalRecordsData>) => createQueryKey('getMedicalRecords', options);
+
+export const getMedicalRecordsOptions = (options: Options<GetMedicalRecordsData>) => queryOptions<GetMedicalRecordsResponse, AxiosError<DefaultError>, GetMedicalRecordsResponse, ReturnType<typeof getMedicalRecordsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getMedicalRecords({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getMedicalRecordsQueryKey(options)
+});
+
+export const addMedicalRecordMutation = (options?: Partial<Options<AddMedicalRecordData>>): UseMutationOptions<AddMedicalRecordResponse, AxiosError<DefaultError>, Options<AddMedicalRecordData>> => {
+    const mutationOptions: UseMutationOptions<AddMedicalRecordResponse, AxiosError<DefaultError>, Options<AddMedicalRecordData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await addMedicalRecord({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const markAllAsReadMutation = (options?: Partial<Options<MarkAllAsReadData>>): UseMutationOptions<unknown, AxiosError<DefaultError>, Options<MarkAllAsReadData>> => {
+    const mutationOptions: UseMutationOptions<unknown, AxiosError<DefaultError>, Options<MarkAllAsReadData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await markAllAsRead({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const registerMutation = (options?: Partial<Options<RegisterData>>): UseMutationOptions<RegisterResponse, AxiosError<DefaultError>, Options<RegisterData>> => {
+    const mutationOptions: UseMutationOptions<RegisterResponse, AxiosError<DefaultError>, Options<RegisterData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await register({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const logoutMutation = (options?: Partial<Options<LogoutData>>): UseMutationOptions<unknown, AxiosError<DefaultError>, Options<LogoutData>> => {
+    const mutationOptions: UseMutationOptions<unknown, AxiosError<DefaultError>, Options<LogoutData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await logout({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const loginMutation = (options?: Partial<Options<LoginData>>): UseMutationOptions<LoginResponse, AxiosError<DefaultError>, Options<LoginData>> => {
+    const mutationOptions: UseMutationOptions<LoginResponse, AxiosError<DefaultError>, Options<LoginData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await login({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const bookAppointmentMutation = (options?: Partial<Options<BookAppointmentData>>): UseMutationOptions<BookAppointmentResponse, AxiosError<DefaultError>, Options<BookAppointmentData>> => {
+    const mutationOptions: UseMutationOptions<BookAppointmentResponse, AxiosError<DefaultError>, Options<BookAppointmentData>> = {
+        mutationFn: async (fnOptions) => {
+            const { data } = await bookAppointment({
+                ...options,
+                ...fnOptions,
+                throwOnError: true
+            });
+            return data;
+        }
+    };
+    return mutationOptions;
+};
+
+export const getDoctorQueueQueryKey = (options: Options<GetDoctorQueueData>) => createQueryKey('getDoctorQueue', options);
+
+export const getDoctorQueueOptions = (options: Options<GetDoctorQueueData>) => queryOptions<GetDoctorQueueResponse, AxiosError<DefaultError>, GetDoctorQueueResponse, ReturnType<typeof getDoctorQueueQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getDoctorQueue({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getDoctorQueueQueryKey(options)
+});
+
+export const searchPatientsQueryKey = (options: Options<SearchPatientsData>) => createQueryKey('searchPatients', options);
+
+export const searchPatientsOptions = (options: Options<SearchPatientsData>) => queryOptions<SearchPatientsResponse, AxiosError<DefaultError>, SearchPatientsResponse, ReturnType<typeof searchPatientsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await searchPatients({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: searchPatientsQueryKey(options)
+});
+
+export const getUnreadNotificationsQueryKey = (options?: Options<GetUnreadNotificationsData>) => createQueryKey('getUnreadNotifications', options);
+
+export const getUnreadNotificationsOptions = (options?: Options<GetUnreadNotificationsData>) => queryOptions<GetUnreadNotificationsResponse, AxiosError<DefaultError>, GetUnreadNotificationsResponse, ReturnType<typeof getUnreadNotificationsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getUnreadNotifications({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getUnreadNotificationsQueryKey(options)
+});
+
+export const subscribeQueryKey = (options?: Options<SubscribeData>) => createQueryKey('subscribe', options);
+
+export const subscribeOptions = (options?: Options<SubscribeData>) => queryOptions<SubscribeResponse, AxiosError<DefaultError>, SubscribeResponse, ReturnType<typeof subscribeQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await subscribe({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: subscribeQueryKey(options)
+});
 
 export const getDoctorsQueryKey = (options?: Options<GetDoctorsData>) => createQueryKey('getDoctors', options);
 
-/**
- * List Doctors
- *
- * Lists active registered doctors. Cached in Redis for 1 hour.
- */
 export const getDoctorsOptions = (options?: Options<GetDoctorsData>) => queryOptions<GetDoctorsResponse, AxiosError<DefaultError>, GetDoctorsResponse, ReturnType<typeof getDoctorsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
         const { data } = await getDoctors({
@@ -254,35 +313,11 @@ export const getDoctorsOptions = (options?: Options<GetDoctorsData>) => queryOpt
     queryKey: getDoctorsQueryKey(options)
 });
 
-/**
- * Book Appointment
- *
- * Schedules a doctor consultation. Rejects booking if there is a scheduling conflict within a 30-minute window. Uses optimistic locking.
- */
-export const postAppointmentsMutation = (options?: Partial<Options<PostAppointmentsData>>): UseMutationOptions<PostAppointmentsResponse, AxiosError<DefaultError>, Options<PostAppointmentsData>> => {
-    const mutationOptions: UseMutationOptions<PostAppointmentsResponse, AxiosError<DefaultError>, Options<PostAppointmentsData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await postAppointments({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
+export const getCurrentUserQueryKey = (options?: Options<GetCurrentUserData>) => createQueryKey('getCurrentUser', options);
 
-export const getAppointmentsDoctorByDoctorIdQueryKey = (options: Options<GetAppointmentsDoctorByDoctorIdData>) => createQueryKey('getAppointmentsDoctorByDoctorId', options);
-
-/**
- * Get Doctor Schedule
- *
- * Lists appointments assigned to the doctor, ordered by time ascending.
- */
-export const getAppointmentsDoctorByDoctorIdOptions = (options: Options<GetAppointmentsDoctorByDoctorIdData>) => queryOptions<GetAppointmentsDoctorByDoctorIdResponse, AxiosError<DefaultError>, GetAppointmentsDoctorByDoctorIdResponse, ReturnType<typeof getAppointmentsDoctorByDoctorIdQueryKey>>({
+export const getCurrentUserOptions = (options?: Options<GetCurrentUserData>) => queryOptions<GetCurrentUserResponse, AxiosError<DefaultError>, GetCurrentUserResponse, ReturnType<typeof getCurrentUserQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getAppointmentsDoctorByDoctorId({
+        const { data } = await getCurrentUser({
             ...options,
             ...queryKey[0],
             signal,
@@ -290,57 +325,14 @@ export const getAppointmentsDoctorByDoctorIdOptions = (options: Options<GetAppoi
         });
         return data;
     },
-    queryKey: getAppointmentsDoctorByDoctorIdQueryKey(options)
+    queryKey: getCurrentUserQueryKey(options)
 });
 
-/**
- * Update Appointment Status
- *
- * Transitions slot state (e.g. to CANCELLED). Rejects transition if slot is already cancelled or completed.
- */
-export const putAppointmentsByIdStatusMutation = (options?: Partial<Options<PutAppointmentsByIdStatusData>>): UseMutationOptions<PutAppointmentsByIdStatusResponse, AxiosError<DefaultError>, Options<PutAppointmentsByIdStatusData>> => {
-    const mutationOptions: UseMutationOptions<PutAppointmentsByIdStatusResponse, AxiosError<DefaultError>, Options<PutAppointmentsByIdStatusData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await putAppointmentsByIdStatus({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
+export const getPatientAppointmentsQueryKey = (options: Options<GetPatientAppointmentsData>) => createQueryKey('getPatientAppointments', options);
 
-/**
- * Check-In (Enqueue)
- *
- * Checks in a patient and issues the next sequential token number. Rejects if patient is already active in queue.
- */
-export const postQueueCheckInMutation = (options?: Partial<Options<PostQueueCheckInData>>): UseMutationOptions<PostQueueCheckInResponse, AxiosError<DefaultError>, Options<PostQueueCheckInData>> => {
-    const mutationOptions: UseMutationOptions<PostQueueCheckInResponse, AxiosError<DefaultError>, Options<PostQueueCheckInData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await postQueueCheckIn({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
-
-export const getQueueDoctorByDoctorIdQueryKey = (options: Options<GetQueueDoctorByDoctorIdData>) => createQueryKey('getQueueDoctorByDoctorId', options);
-
-/**
- * Get Doctor Queue Lane
- *
- * Retrieves the active queue list (WAITING and ACTIVE) assigned to the doctor.
- */
-export const getQueueDoctorByDoctorIdOptions = (options: Options<GetQueueDoctorByDoctorIdData>) => queryOptions<GetQueueDoctorByDoctorIdResponse, AxiosError<DefaultError>, GetQueueDoctorByDoctorIdResponse, ReturnType<typeof getQueueDoctorByDoctorIdQueryKey>>({
+export const getPatientAppointmentsOptions = (options: Options<GetPatientAppointmentsData>) => queryOptions<GetPatientAppointmentsResponse, AxiosError<DefaultError>, GetPatientAppointmentsResponse, ReturnType<typeof getPatientAppointmentsQueryKey>>({
     queryFn: async ({ queryKey, signal }) => {
-        const { data } = await getQueueDoctorByDoctorId({
+        const { data } = await getPatientAppointments({
             ...options,
             ...queryKey[0],
             signal,
@@ -348,43 +340,20 @@ export const getQueueDoctorByDoctorIdOptions = (options: Options<GetQueueDoctorB
         });
         return data;
     },
-    queryKey: getQueueDoctorByDoctorIdQueryKey(options)
+    queryKey: getPatientAppointmentsQueryKey(options)
 });
 
-/**
- * Call Patient
- *
- * Sets status to ACTIVE. Dispatches async SMS notifying the patient to proceed to the room. Restricted to ROLE_DOCTOR, ROLE_ADMIN.
- */
-export const putQueueByIdCallMutation = (options?: Partial<Options<PutQueueByIdCallData>>): UseMutationOptions<PutQueueByIdCallResponse, AxiosError<DefaultError>, Options<PutQueueByIdCallData>> => {
-    const mutationOptions: UseMutationOptions<PutQueueByIdCallResponse, AxiosError<DefaultError>, Options<PutQueueByIdCallData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await putQueueByIdCall({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
+export const getDoctorAppointmentsQueryKey = (options: Options<GetDoctorAppointmentsData>) => createQueryKey('getDoctorAppointments', options);
 
-/**
- * Complete Consultation
- *
- * Sets status to COMPLETED and evicts patient queue item details. Restricted to ROLE_DOCTOR, ROLE_ADMIN.
- */
-export const putQueueByIdCompleteMutation = (options?: Partial<Options<PutQueueByIdCompleteData>>): UseMutationOptions<PutQueueByIdCompleteResponse, AxiosError<DefaultError>, Options<PutQueueByIdCompleteData>> => {
-    const mutationOptions: UseMutationOptions<PutQueueByIdCompleteResponse, AxiosError<DefaultError>, Options<PutQueueByIdCompleteData>> = {
-        mutationFn: async (fnOptions) => {
-            const { data } = await putQueueByIdComplete({
-                ...options,
-                ...fnOptions,
-                throwOnError: true
-            });
-            return data;
-        }
-    };
-    return mutationOptions;
-};
+export const getDoctorAppointmentsOptions = (options: Options<GetDoctorAppointmentsData>) => queryOptions<GetDoctorAppointmentsResponse, AxiosError<DefaultError>, GetDoctorAppointmentsResponse, ReturnType<typeof getDoctorAppointmentsQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+        const { data } = await getDoctorAppointments({
+            ...options,
+            ...queryKey[0],
+            signal,
+            throwOnError: true
+        });
+        return data;
+    },
+    queryKey: getDoctorAppointmentsQueryKey(options)
+});

@@ -10,6 +10,10 @@ import dev.salman.backend.messaging.MessagePublisher;
 import dev.salman.backend.messaging.dto.AuditEvent;
 import dev.salman.backend.messaging.dto.NotificationEvent;
 import dev.salman.backend.shared.SecurityUtils;
+import dev.salman.backend.features.notification.entity.Notification;
+import dev.salman.backend.features.notification.repository.NotificationRepository;
+import dev.salman.backend.features.notification.service.NotificationCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,15 +34,21 @@ public class QueueController {
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
     private final MessagePublisher messagePublisher;
+    private final NotificationRepository notificationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public QueueController(QueueItemRepository queueItemRepository,
                            UserRepository userRepository,
                            PatientRepository patientRepository,
-                           MessagePublisher messagePublisher) {
+                           MessagePublisher messagePublisher,
+                           NotificationRepository notificationRepository,
+                           ApplicationEventPublisher eventPublisher) {
         this.queueItemRepository = queueItemRepository;
         this.userRepository = userRepository;
         this.patientRepository = patientRepository;
         this.messagePublisher = messagePublisher;
+        this.notificationRepository = notificationRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @PostMapping("/check-in")
@@ -46,9 +56,8 @@ public class QueueController {
     @Transactional
     public ResponseEntity<QueueItem> checkIn(@RequestBody QueueRequest request) {
         // 1. Verify Patient
-        if (!patientRepository.existsById(request.getPatientId())) {
-            throw new EntityNotFoundException("Patient not found with ID: " + request.getPatientId());
-        }
+        dev.salman.backend.features.patient.entity.Patient patient = patientRepository.findById(request.getPatientId())
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found with ID: " + request.getPatientId()));
 
         // 2. Verify Doctor
         User doctor = userRepository.findById(request.getDoctorId())
@@ -93,6 +102,16 @@ public class QueueController {
                 .channel("SMS")
                 .build());
 
+        // 7. Save App Notification for the Doctor and Publish Event
+        Notification appNotification = Notification.builder()
+                .userId(request.getDoctorId())
+                .message("Patient " + patient.getName() + " checked in. Token: " + savedItem.getTokenNumber())
+                .channel("APP")
+                .status("UNREAD")
+                .build();
+        Notification savedNotification = notificationRepository.save(appNotification);
+        eventPublisher.publishEvent(new NotificationCreatedEvent(request.getDoctorId(), savedNotification));
+
         return ResponseEntity.status(HttpStatus.CREATED).body(savedItem);
     }
 
@@ -135,6 +154,19 @@ public class QueueController {
                 .message("Your token " + updatedItem.getTokenNumber() + " is being called. Please proceed to the room.")
                 .channel("SMS")
                 .build());
+
+        // 7. Save App Notification for the Doctor (Self/Confirmation) and Publish Event
+        dev.salman.backend.features.patient.entity.Patient patient = patientRepository.findById(updatedItem.getPatientId())
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found with ID: " + updatedItem.getPatientId()));
+
+        Notification appNotification = Notification.builder()
+                .userId(SecurityUtils.getCurrentUserId())
+                .message("Calling patient " + patient.getName() + " (Token: " + updatedItem.getTokenNumber() + ")")
+                .channel("APP")
+                .status("UNREAD")
+                .build();
+        Notification savedNotification = notificationRepository.save(appNotification);
+        eventPublisher.publishEvent(new NotificationCreatedEvent(SecurityUtils.getCurrentUserId(), savedNotification));
 
         return ResponseEntity.ok(updatedItem);
     }

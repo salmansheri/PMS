@@ -2,19 +2,25 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { AxiosError } from "axios";
 import {
-  getPatientsSearchOptions,
-  postPatientsMutation,
+  searchPatientsOptions,
+  registerPatientMutation,
 } from "@/client/@tanstack/react-query.gen";
+import type { Options } from "@/client";
+import type {
+  RegisterPatientData,
+  RegisterPatientResponse,
+} from "@/client/types.gen";
 
 export function useRegisterPatient() {
   const queryClient = useQueryClient();
-  return useMutation({
-    ...postPatientsMutation(),
+  return useMutation<RegisterPatientResponse, AxiosError<any>, Options<RegisterPatientData>>({
+    ...registerPatientMutation(),
     onSuccess: () => {
       // Invalidate both empty parameters query key and specific search keys by prefix
       queryClient.invalidateQueries({
-        queryKey: ["getPatientsSearch"],
+        queryKey: ["searchPatients"],
       });
       toast.success("Patient registered successfully");
     },
@@ -25,7 +31,7 @@ export function useRegisterPatient() {
 }
 
 export function useSearchPatients(
-  options: Parameters<typeof getPatientsSearchOptions>[0],
+  options: Parameters<typeof searchPatientsOptions>[0],
 ) {
-  return useQuery(getPatientsSearchOptions(options));
+  return useQuery(searchPatientsOptions(options));
 }

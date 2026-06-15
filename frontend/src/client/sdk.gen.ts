@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { GetAppointmentsDoctorByDoctorIdData, GetAppointmentsDoctorByDoctorIdResponses, GetAuthMeData, GetAuthMeErrors, GetAuthMeResponses, GetDoctorsData, GetDoctorsResponses, GetPatientsByIdData, GetPatientsByIdErrors, GetPatientsByIdRecordsData, GetPatientsByIdRecordsResponses, GetPatientsByIdResponses, GetPatientsSearchData, GetPatientsSearchResponses, GetQueueDoctorByDoctorIdData, GetQueueDoctorByDoctorIdResponses, PostAppointmentsData, PostAppointmentsErrors, PostAppointmentsResponses, PostAuthLoginData, PostAuthLoginErrors, PostAuthLoginResponses, PostAuthLogoutData, PostAuthLogoutResponses, PostAuthRegisterData, PostAuthRegisterErrors, PostAuthRegisterResponses, PostPatientsByIdRecordsData, PostPatientsByIdRecordsResponses, PostPatientsData, PostPatientsErrors, PostPatientsResponses, PostQueueCheckInData, PostQueueCheckInResponses, PutAppointmentsByIdStatusData, PutAppointmentsByIdStatusResponses, PutPatientsByIdData, PutPatientsByIdErrors, PutPatientsByIdResponses, PutQueueByIdCallData, PutQueueByIdCallResponses, PutQueueByIdCompleteData, PutQueueByIdCompleteResponses } from './types.gen';
+import type { AddMedicalRecordData, AddMedicalRecordResponses, BookAppointmentData, BookAppointmentResponses, CallPatientData, CallPatientResponses, CheckInData, CheckInResponses, CompleteConsultationData, CompleteConsultationResponses, GetCurrentUserData, GetCurrentUserResponses, GetDoctorAppointmentsData, GetDoctorAppointmentsResponses, GetDoctorQueueData, GetDoctorQueueResponses, GetDoctorsData, GetDoctorsResponses, GetMedicalRecordsData, GetMedicalRecordsResponses, GetPatientAppointmentsData, GetPatientAppointmentsResponses, GetPatientByIdData, GetPatientByIdResponses, GetUnreadNotificationsData, GetUnreadNotificationsResponses, LoginData, LoginResponses, LogoutData, LogoutResponses, MarkAllAsReadData, MarkAllAsReadResponses, RegisterData, RegisterPatientData, RegisterPatientResponses, RegisterResponses, SearchPatientsData, SearchPatientsResponses, SubscribeData, SubscribeResponses, UpdateAppointmentStatusData, UpdateAppointmentStatusResponses, UpdatePatientData, UpdatePatientResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -18,99 +18,27 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
-/**
- * Authenticate Operator Node
- *
- * Verifies staff credentials and returns a secure HttpOnly session cookie containing the JWT.
- */
-export const postAuthLogin = <ThrowOnError extends boolean = false>(options: Options<PostAuthLoginData, ThrowOnError>): RequestResult<PostAuthLoginResponses, PostAuthLoginErrors, ThrowOnError> => (options.client ?? client).post<PostAuthLoginResponses, PostAuthLoginErrors, ThrowOnError>({
-    responseType: 'json',
-    url: '/auth/login',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Terminate Session
- *
- * Evicts the JWT cookie and publishes a logout event to the audit trail.
- */
-export const postAuthLogout = <ThrowOnError extends boolean = false>(options?: Options<PostAuthLogoutData, ThrowOnError>): RequestResult<PostAuthLogoutResponses, unknown, ThrowOnError> => (options?.client ?? client).post<PostAuthLogoutResponses, unknown, ThrowOnError>({
+export const completeConsultation = <ThrowOnError extends boolean = false>(options: Options<CompleteConsultationData, ThrowOnError>): RequestResult<CompleteConsultationResponses, unknown, ThrowOnError> => (options.client ?? client).put<CompleteConsultationResponses, unknown, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'token',
             type: 'apiKey'
         }],
-    url: '/auth/logout',
+    url: '/queue/{id}/complete',
     ...options
 });
 
-/**
- * Register Staff Node
- *
- * Creates a new clinic staff account. Restricted to ROLE_ADMIN.
- */
-export const postAuthRegister = <ThrowOnError extends boolean = false>(options: Options<PostAuthRegisterData, ThrowOnError>): RequestResult<PostAuthRegisterResponses, PostAuthRegisterErrors, ThrowOnError> => (options.client ?? client).post<PostAuthRegisterResponses, PostAuthRegisterErrors, ThrowOnError>({
-    responseType: 'json',
+export const callPatient = <ThrowOnError extends boolean = false>(options: Options<CallPatientData, ThrowOnError>): RequestResult<CallPatientResponses, unknown, ThrowOnError> => (options.client ?? client).put<CallPatientResponses, unknown, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'token',
             type: 'apiKey'
         }],
-    url: '/auth/register',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get Current Profile
- *
- * Returns details of the currently authenticated operator.
- */
-export const getAuthMe = <ThrowOnError extends boolean = false>(options?: Options<GetAuthMeData, ThrowOnError>): RequestResult<GetAuthMeResponses, GetAuthMeErrors, ThrowOnError> => (options?.client ?? client).get<GetAuthMeResponses, GetAuthMeErrors, ThrowOnError>({
-    responseType: 'json',
-    security: [{
-            in: 'cookie',
-            name: 'token',
-            type: 'apiKey'
-        }],
-    url: '/auth/me',
+    url: '/queue/{id}/call',
     ...options
 });
 
-/**
- * Register Patient (Intake)
- *
- * Performs patient intake and demographic registration. SSN is automatically masked.
- */
-export const postPatients = <ThrowOnError extends boolean = false>(options: Options<PostPatientsData, ThrowOnError>): RequestResult<PostPatientsResponses, PostPatientsErrors, ThrowOnError> => (options.client ?? client).post<PostPatientsResponses, PostPatientsErrors, ThrowOnError>({
-    responseType: 'json',
-    security: [{
-            in: 'cookie',
-            name: 'token',
-            type: 'apiKey'
-        }],
-    url: '/patients',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get Patient Details
- *
- * Retrieves demographic details. Cached in Redis for 1 hour.
- */
-export const getPatientsById = <ThrowOnError extends boolean = false>(options: Options<GetPatientsByIdData, ThrowOnError>): RequestResult<GetPatientsByIdResponses, GetPatientsByIdErrors, ThrowOnError> => (options.client ?? client).get<GetPatientsByIdResponses, GetPatientsByIdErrors, ThrowOnError>({
-    responseType: 'json',
+export const getPatientById = <ThrowOnError extends boolean = false>(options: Options<GetPatientByIdData, ThrowOnError>): RequestResult<GetPatientByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetPatientByIdResponses, unknown, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'token',
@@ -120,13 +48,7 @@ export const getPatientsById = <ThrowOnError extends boolean = false>(options: O
     ...options
 });
 
-/**
- * Update Patient Profile
- *
- * Updates details and evicts the corresponding Redis patient cache entry.
- */
-export const putPatientsById = <ThrowOnError extends boolean = false>(options: Options<PutPatientsByIdData, ThrowOnError>): RequestResult<PutPatientsByIdResponses, PutPatientsByIdErrors, ThrowOnError> => (options.client ?? client).put<PutPatientsByIdResponses, PutPatientsByIdErrors, ThrowOnError>({
-    responseType: 'json',
+export const updatePatient = <ThrowOnError extends boolean = false>(options: Options<UpdatePatientData, ThrowOnError>): RequestResult<UpdatePatientResponses, unknown, ThrowOnError> => (options.client ?? client).put<UpdatePatientResponses, unknown, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'token',
@@ -140,117 +62,7 @@ export const putPatientsById = <ThrowOnError extends boolean = false>(options: O
     }
 });
 
-/**
- * Search Patients
- *
- * Performs case-insensitive search by patient name.
- */
-export const getPatientsSearch = <ThrowOnError extends boolean = false>(options: Options<GetPatientsSearchData, ThrowOnError>): RequestResult<GetPatientsSearchResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetPatientsSearchResponses, unknown, ThrowOnError>({
-    responseType: 'json',
-    security: [{
-            in: 'cookie',
-            name: 'token',
-            type: 'apiKey'
-        }],
-    url: '/patients/search',
-    ...options
-});
-
-/**
- * Get Patient Consultation History
- *
- * Retrieves all consultation records for the patient, ordered by date descending. Restricted to ROLE_DOCTOR, ROLE_ADMIN.
- */
-export const getPatientsByIdRecords = <ThrowOnError extends boolean = false>(options: Options<GetPatientsByIdRecordsData, ThrowOnError>): RequestResult<GetPatientsByIdRecordsResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetPatientsByIdRecordsResponses, unknown, ThrowOnError>({
-    responseType: 'json',
-    security: [{
-            in: 'cookie',
-            name: 'token',
-            type: 'apiKey'
-        }],
-    url: '/patients/{id}/records',
-    ...options
-});
-
-/**
- * Add Medical Record
- *
- * Appends a consultation record. Custom assessments/vitals are sent in a dynamic JSON structure. Restricted to ROLE_DOCTOR, ROLE_ADMIN.
- */
-export const postPatientsByIdRecords = <ThrowOnError extends boolean = false>(options: Options<PostPatientsByIdRecordsData, ThrowOnError>): RequestResult<PostPatientsByIdRecordsResponses, unknown, ThrowOnError> => (options.client ?? client).post<PostPatientsByIdRecordsResponses, unknown, ThrowOnError>({
-    responseType: 'json',
-    security: [{
-            in: 'cookie',
-            name: 'token',
-            type: 'apiKey'
-        }],
-    url: '/patients/{id}/records',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * List Doctors
- *
- * Lists active registered doctors. Cached in Redis for 1 hour.
- */
-export const getDoctors = <ThrowOnError extends boolean = false>(options?: Options<GetDoctorsData, ThrowOnError>): RequestResult<GetDoctorsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetDoctorsResponses, unknown, ThrowOnError>({
-    responseType: 'json',
-    security: [{
-            in: 'cookie',
-            name: 'token',
-            type: 'apiKey'
-        }],
-    url: '/doctors',
-    ...options
-});
-
-/**
- * Book Appointment
- *
- * Schedules a doctor consultation. Rejects booking if there is a scheduling conflict within a 30-minute window. Uses optimistic locking.
- */
-export const postAppointments = <ThrowOnError extends boolean = false>(options: Options<PostAppointmentsData, ThrowOnError>): RequestResult<PostAppointmentsResponses, PostAppointmentsErrors, ThrowOnError> => (options.client ?? client).post<PostAppointmentsResponses, PostAppointmentsErrors, ThrowOnError>({
-    responseType: 'json',
-    security: [{
-            in: 'cookie',
-            name: 'token',
-            type: 'apiKey'
-        }],
-    url: '/appointments',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Get Doctor Schedule
- *
- * Lists appointments assigned to the doctor, ordered by time ascending.
- */
-export const getAppointmentsDoctorByDoctorId = <ThrowOnError extends boolean = false>(options: Options<GetAppointmentsDoctorByDoctorIdData, ThrowOnError>): RequestResult<GetAppointmentsDoctorByDoctorIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetAppointmentsDoctorByDoctorIdResponses, unknown, ThrowOnError>({
-    responseType: 'json',
-    security: [{
-            in: 'cookie',
-            name: 'token',
-            type: 'apiKey'
-        }],
-    url: '/appointments/doctor/{doctorId}',
-    ...options
-});
-
-/**
- * Update Appointment Status
- *
- * Transitions slot state (e.g. to CANCELLED). Rejects transition if slot is already cancelled or completed.
- */
-export const putAppointmentsByIdStatus = <ThrowOnError extends boolean = false>(options: Options<PutAppointmentsByIdStatusData, ThrowOnError>): RequestResult<PutAppointmentsByIdStatusResponses, unknown, ThrowOnError> => (options.client ?? client).put<PutAppointmentsByIdStatusResponses, unknown, ThrowOnError>({
-    responseType: 'json',
+export const updateAppointmentStatus = <ThrowOnError extends boolean = false>(options: Options<UpdateAppointmentStatusData, ThrowOnError>): RequestResult<UpdateAppointmentStatusResponses, unknown, ThrowOnError> => (options.client ?? client).put<UpdateAppointmentStatusResponses, unknown, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'token',
@@ -260,13 +72,7 @@ export const putAppointmentsByIdStatus = <ThrowOnError extends boolean = false>(
     ...options
 });
 
-/**
- * Check-In (Enqueue)
- *
- * Checks in a patient and issues the next sequential token number. Rejects if patient is already active in queue.
- */
-export const postQueueCheckIn = <ThrowOnError extends boolean = false>(options: Options<PostQueueCheckInData, ThrowOnError>): RequestResult<PostQueueCheckInResponses, unknown, ThrowOnError> => (options.client ?? client).post<PostQueueCheckInResponses, unknown, ThrowOnError>({
-    responseType: 'json',
+export const checkIn = <ThrowOnError extends boolean = false>(options: Options<CheckInData, ThrowOnError>): RequestResult<CheckInResponses, unknown, ThrowOnError> => (options.client ?? client).post<CheckInResponses, unknown, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'token',
@@ -280,13 +86,107 @@ export const postQueueCheckIn = <ThrowOnError extends boolean = false>(options: 
     }
 });
 
-/**
- * Get Doctor Queue Lane
- *
- * Retrieves the active queue list (WAITING and ACTIVE) assigned to the doctor.
- */
-export const getQueueDoctorByDoctorId = <ThrowOnError extends boolean = false>(options: Options<GetQueueDoctorByDoctorIdData, ThrowOnError>): RequestResult<GetQueueDoctorByDoctorIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetQueueDoctorByDoctorIdResponses, unknown, ThrowOnError>({
-    responseType: 'json',
+export const registerPatient = <ThrowOnError extends boolean = false>(options: Options<RegisterPatientData, ThrowOnError>): RequestResult<RegisterPatientResponses, unknown, ThrowOnError> => (options.client ?? client).post<RegisterPatientResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/patients',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getMedicalRecords = <ThrowOnError extends boolean = false>(options: Options<GetMedicalRecordsData, ThrowOnError>): RequestResult<GetMedicalRecordsResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetMedicalRecordsResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/patients/{id}/records',
+    ...options
+});
+
+export const addMedicalRecord = <ThrowOnError extends boolean = false>(options: Options<AddMedicalRecordData, ThrowOnError>): RequestResult<AddMedicalRecordResponses, unknown, ThrowOnError> => (options.client ?? client).post<AddMedicalRecordResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/patients/{id}/records',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const markAllAsRead = <ThrowOnError extends boolean = false>(options?: Options<MarkAllAsReadData, ThrowOnError>): RequestResult<MarkAllAsReadResponses, unknown, ThrowOnError> => (options?.client ?? client).post<MarkAllAsReadResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/notifications/read-all',
+    ...options
+});
+
+export const register = <ThrowOnError extends boolean = false>(options: Options<RegisterData, ThrowOnError>): RequestResult<RegisterResponses, unknown, ThrowOnError> => (options.client ?? client).post<RegisterResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/auth/register',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const logout = <ThrowOnError extends boolean = false>(options?: Options<LogoutData, ThrowOnError>): RequestResult<LogoutResponses, unknown, ThrowOnError> => (options?.client ?? client).post<LogoutResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/auth/logout',
+    ...options
+});
+
+export const login = <ThrowOnError extends boolean = false>(options: Options<LoginData, ThrowOnError>): RequestResult<LoginResponses, unknown, ThrowOnError> => (options.client ?? client).post<LoginResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/auth/login',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const bookAppointment = <ThrowOnError extends boolean = false>(options: Options<BookAppointmentData, ThrowOnError>): RequestResult<BookAppointmentResponses, unknown, ThrowOnError> => (options.client ?? client).post<BookAppointmentResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/appointments',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+export const getDoctorQueue = <ThrowOnError extends boolean = false>(options: Options<GetDoctorQueueData, ThrowOnError>): RequestResult<GetDoctorQueueResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetDoctorQueueResponses, unknown, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'token',
@@ -296,34 +196,72 @@ export const getQueueDoctorByDoctorId = <ThrowOnError extends boolean = false>(o
     ...options
 });
 
-/**
- * Call Patient
- *
- * Sets status to ACTIVE. Dispatches async SMS notifying the patient to proceed to the room. Restricted to ROLE_DOCTOR, ROLE_ADMIN.
- */
-export const putQueueByIdCall = <ThrowOnError extends boolean = false>(options: Options<PutQueueByIdCallData, ThrowOnError>): RequestResult<PutQueueByIdCallResponses, unknown, ThrowOnError> => (options.client ?? client).put<PutQueueByIdCallResponses, unknown, ThrowOnError>({
-    responseType: 'json',
+export const searchPatients = <ThrowOnError extends boolean = false>(options: Options<SearchPatientsData, ThrowOnError>): RequestResult<SearchPatientsResponses, unknown, ThrowOnError> => (options.client ?? client).get<SearchPatientsResponses, unknown, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'token',
             type: 'apiKey'
         }],
-    url: '/queue/{id}/call',
+    url: '/patients/search',
     ...options
 });
 
-/**
- * Complete Consultation
- *
- * Sets status to COMPLETED and evicts patient queue item details. Restricted to ROLE_DOCTOR, ROLE_ADMIN.
- */
-export const putQueueByIdComplete = <ThrowOnError extends boolean = false>(options: Options<PutQueueByIdCompleteData, ThrowOnError>): RequestResult<PutQueueByIdCompleteResponses, unknown, ThrowOnError> => (options.client ?? client).put<PutQueueByIdCompleteResponses, unknown, ThrowOnError>({
-    responseType: 'json',
+export const getUnreadNotifications = <ThrowOnError extends boolean = false>(options?: Options<GetUnreadNotificationsData, ThrowOnError>): RequestResult<GetUnreadNotificationsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetUnreadNotificationsResponses, unknown, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'token',
             type: 'apiKey'
         }],
-    url: '/queue/{id}/complete',
+    url: '/notifications/unread',
+    ...options
+});
+
+export const subscribe = <ThrowOnError extends boolean = false>(options?: Options<SubscribeData, ThrowOnError>): RequestResult<SubscribeResponses, unknown, ThrowOnError> => (options?.client ?? client).get<SubscribeResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/notifications/subscribe',
+    ...options
+});
+
+export const getDoctors = <ThrowOnError extends boolean = false>(options?: Options<GetDoctorsData, ThrowOnError>): RequestResult<GetDoctorsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetDoctorsResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/doctors',
+    ...options
+});
+
+export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserData, ThrowOnError>): RequestResult<GetCurrentUserResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/auth/me',
+    ...options
+});
+
+export const getPatientAppointments = <ThrowOnError extends boolean = false>(options: Options<GetPatientAppointmentsData, ThrowOnError>): RequestResult<GetPatientAppointmentsResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetPatientAppointmentsResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/appointments/patient/{patientId}',
+    ...options
+});
+
+export const getDoctorAppointments = <ThrowOnError extends boolean = false>(options: Options<GetDoctorAppointmentsData, ThrowOnError>): RequestResult<GetDoctorAppointmentsResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetDoctorAppointmentsResponses, unknown, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'token',
+            type: 'apiKey'
+        }],
+    url: '/appointments/doctor/{doctorId}',
     ...options
 });

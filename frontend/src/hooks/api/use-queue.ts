@@ -2,19 +2,29 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import type { AxiosError } from "axios";
 import {
-  postQueueCheckInMutation,
-  putQueueByIdCallMutation,
-  putQueueByIdCompleteMutation,
+  checkInMutation,
+  callPatientMutation,
+  completeConsultationMutation,
 } from "@/client/@tanstack/react-query.gen";
+import type { Options } from "@/client";
+import type {
+  CheckInData,
+  CheckInResponse,
+  CallPatientData,
+  CallPatientResponse,
+  CompleteConsultationData,
+  CompleteConsultationResponse,
+} from "@/client/types.gen";
 
 export function useIssueToken() {
   const queryClient = useQueryClient();
-  return useMutation({
-    ...postQueueCheckInMutation(),
+  return useMutation<CheckInResponse, AxiosError<any>, Options<CheckInData>>({
+    ...checkInMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["getQueueDoctorByDoctorId"],
+        queryKey: ["getDoctorQueue"],
       });
       toast.success("Queue token generated successfully");
     },
@@ -26,11 +36,11 @@ export function useIssueToken() {
 
 export function useCallNextToken() {
   const queryClient = useQueryClient();
-  return useMutation({
-    ...putQueueByIdCallMutation(),
+  return useMutation<CallPatientResponse, AxiosError<any>, Options<CallPatientData>>({
+    ...callPatientMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["getQueueDoctorByDoctorId"],
+        queryKey: ["getDoctorQueue"],
       });
       toast.success("Patient called successfully");
     },
@@ -42,11 +52,11 @@ export function useCallNextToken() {
 
 export function useCompleteToken() {
   const queryClient = useQueryClient();
-  return useMutation({
-    ...putQueueByIdCompleteMutation(),
+  return useMutation<CompleteConsultationResponse, AxiosError<any>, Options<CompleteConsultationData>>({
+    ...completeConsultationMutation(),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["getQueueDoctorByDoctorId"],
+        queryKey: ["getDoctorQueue"],
       });
       toast.success("Consultation completed successfully");
     },

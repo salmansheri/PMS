@@ -4,32 +4,22 @@ export type ClientOptions = {
     baseURL: 'http://localhost:8080/api' | (string & {});
 };
 
-export type LoginRequest = {
-    username: string;
-    password: string;
-};
-
-export type RegisterRequest = {
-    username: string;
-    password: string;
-    role: 'ROLE_ADMIN' | 'ROLE_DOCTOR' | 'ROLE_RECEPTIONIST';
-    fullName: string;
-};
-
-export type UserResponse = {
+export type QueueItem = {
     id?: string;
-    username?: string;
-    role?: string;
-    fullName?: string;
+    patientId?: string;
+    doctorId?: string;
+    tokenNumber?: number;
+    status?: string;
+    checkedInTime?: string;
 };
 
 export type PatientRequest = {
-    name: string;
-    dateOfBirth: string;
-    gender: string;
-    ssn: string;
-    phone: string;
-    email: string;
+    name?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    ssn?: string;
+    phone?: string;
+    email?: string;
     bloodType?: string;
     emergencyContactName?: string;
     emergencyContactPhone?: string;
@@ -48,39 +38,6 @@ export type Patient = {
     emergencyContactPhone?: string;
 };
 
-export type MedicalRecordRequest = {
-    conditions: Array<string>;
-    allergies: Array<string>;
-    vitals: {
-        [key: string]: unknown;
-    };
-};
-
-export type MedicalRecord = {
-    id?: string;
-    patientId?: string;
-    doctorId?: string;
-    createdAt?: string;
-    conditions?: Array<string>;
-    allergies?: Array<string>;
-    vitals?: {
-        [key: string]: unknown;
-    };
-};
-
-export type DoctorResponse = {
-    id?: string;
-    username?: string;
-    fullName?: string;
-};
-
-export type AppointmentRequest = {
-    patientId: string;
-    doctorId: string;
-    appointmentTime: string;
-    notes?: string;
-};
-
 export type Appointment = {
     id?: string;
     patientId?: string;
@@ -92,202 +49,204 @@ export type Appointment = {
 };
 
 export type QueueRequest = {
-    patientId: string;
-    doctorId: string;
+    patientId?: string;
+    doctorId?: string;
 };
 
-export type QueueItem = {
+export type MedicalRecordRequest = {
+    conditions?: Array<string>;
+    allergies?: Array<string>;
+    vitals?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
+    };
+};
+
+export type MedicalRecord = {
     id?: string;
     patientId?: string;
     doctorId?: string;
-    tokenNumber?: number;
-    status?: string;
-    checkedInTime?: string;
-};
-
-export type PostAuthLoginData = {
-    body: LoginRequest;
-    path?: never;
-    query?: never;
-    url: '/auth/login';
-};
-
-export type PostAuthLoginErrors = {
-    /**
-     * Invalid credentials provided.
-     */
-    401: unknown;
-};
-
-export type PostAuthLoginResponses = {
-    /**
-     * Session established successfully.
-     */
-    200: UserResponse;
-};
-
-export type PostAuthLoginResponse = PostAuthLoginResponses[keyof PostAuthLoginResponses];
-
-export type PostAuthLogoutData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/auth/logout';
-};
-
-export type PostAuthLogoutResponses = {
-    /**
-     * Session terminated, cookie cleared.
-     */
-    200: unknown;
-};
-
-export type PostAuthRegisterData = {
-    body: RegisterRequest;
-    path?: never;
-    query?: never;
-    url: '/auth/register';
-};
-
-export type PostAuthRegisterErrors = {
-    /**
-     * Username already taken or invalid parameters.
-     */
-    400: {
-        error?: string;
+    createdAt?: string;
+    conditions?: Array<string>;
+    allergies?: Array<string>;
+    vitals?: {
+        [key: string]: {
+            [key: string]: unknown;
+        };
     };
-    /**
-     * Insufficient permissions (requires Admin role).
-     */
-    403: unknown;
 };
 
-export type PostAuthRegisterError = PostAuthRegisterErrors[keyof PostAuthRegisterErrors];
-
-export type PostAuthRegisterResponses = {
-    /**
-     * Staff registered successfully.
-     */
-    201: UserResponse;
+export type RegisterRequest = {
+    username?: string;
+    password?: string;
+    role?: string;
+    fullName?: string;
 };
 
-export type PostAuthRegisterResponse = PostAuthRegisterResponses[keyof PostAuthRegisterResponses];
+export type UserResponse = {
+    id?: string;
+    username?: string;
+    role?: string;
+    fullName?: string;
+};
 
-export type GetAuthMeData = {
+export type LoginRequest = {
+    username?: string;
+    password?: string;
+};
+
+export type AppointmentRequest = {
+    patientId?: string;
+    doctorId?: string;
+    appointmentTime?: string;
+    notes?: string;
+};
+
+export type Notification = {
+    id?: string;
+    userId?: string;
+    message?: string;
+    channel?: string;
+    status?: string;
+    createdAt?: string;
+};
+
+export type SseEmitter = {
+    timeout?: number;
+};
+
+export type DoctorResponse = {
+    id?: string;
+    username?: string;
+    fullName?: string;
+};
+
+export type CompleteConsultationData = {
     body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/queue/{id}/complete';
+};
+
+export type CompleteConsultationResponses = {
+    /**
+     * OK
+     */
+    200: QueueItem;
+};
+
+export type CompleteConsultationResponse = CompleteConsultationResponses[keyof CompleteConsultationResponses];
+
+export type CallPatientData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/queue/{id}/call';
+};
+
+export type CallPatientResponses = {
+    /**
+     * OK
+     */
+    200: QueueItem;
+};
+
+export type CallPatientResponse = CallPatientResponses[keyof CallPatientResponses];
+
+export type GetPatientByIdData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/patients/{id}';
+};
+
+export type GetPatientByIdResponses = {
+    /**
+     * OK
+     */
+    200: Patient;
+};
+
+export type GetPatientByIdResponse = GetPatientByIdResponses[keyof GetPatientByIdResponses];
+
+export type UpdatePatientData = {
+    body: PatientRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/patients/{id}';
+};
+
+export type UpdatePatientResponses = {
+    /**
+     * OK
+     */
+    200: Patient;
+};
+
+export type UpdatePatientResponse = UpdatePatientResponses[keyof UpdatePatientResponses];
+
+export type UpdateAppointmentStatusData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query: {
+        status: string;
+    };
+    url: '/appointments/{id}/status';
+};
+
+export type UpdateAppointmentStatusResponses = {
+    /**
+     * OK
+     */
+    200: Appointment;
+};
+
+export type UpdateAppointmentStatusResponse = UpdateAppointmentStatusResponses[keyof UpdateAppointmentStatusResponses];
+
+export type CheckInData = {
+    body: QueueRequest;
     path?: never;
     query?: never;
-    url: '/auth/me';
+    url: '/queue/check-in';
 };
 
-export type GetAuthMeErrors = {
+export type CheckInResponses = {
     /**
-     * Session expired or missing JWT cookie.
+     * OK
      */
-    401: unknown;
+    200: QueueItem;
 };
 
-export type GetAuthMeResponses = {
-    /**
-     * Operator profile details.
-     */
-    200: UserResponse;
-};
+export type CheckInResponse = CheckInResponses[keyof CheckInResponses];
 
-export type GetAuthMeResponse = GetAuthMeResponses[keyof GetAuthMeResponses];
-
-export type PostPatientsData = {
+export type RegisterPatientData = {
     body: PatientRequest;
     path?: never;
     query?: never;
     url: '/patients';
 };
 
-export type PostPatientsErrors = {
+export type RegisterPatientResponses = {
     /**
-     * Requires ROLE_RECEPTIONIST or ROLE_ADMIN.
-     */
-    403: unknown;
-};
-
-export type PostPatientsResponses = {
-    /**
-     * Patient registered successfully.
-     */
-    201: Patient;
-};
-
-export type PostPatientsResponse = PostPatientsResponses[keyof PostPatientsResponses];
-
-export type GetPatientsByIdData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/patients/{id}';
-};
-
-export type GetPatientsByIdErrors = {
-    /**
-     * Patient not found.
-     */
-    404: unknown;
-};
-
-export type GetPatientsByIdResponses = {
-    /**
-     * Patient records retrieved.
+     * OK
      */
     200: Patient;
 };
 
-export type GetPatientsByIdResponse = GetPatientsByIdResponses[keyof GetPatientsByIdResponses];
+export type RegisterPatientResponse = RegisterPatientResponses[keyof RegisterPatientResponses];
 
-export type PutPatientsByIdData = {
-    body: PatientRequest;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/patients/{id}';
-};
-
-export type PutPatientsByIdErrors = {
-    /**
-     * Patient not found.
-     */
-    404: unknown;
-};
-
-export type PutPatientsByIdResponses = {
-    /**
-     * Patient profile updated successfully.
-     */
-    200: Patient;
-};
-
-export type PutPatientsByIdResponse = PutPatientsByIdResponses[keyof PutPatientsByIdResponses];
-
-export type GetPatientsSearchData = {
-    body?: never;
-    path?: never;
-    query: {
-        name: string;
-    };
-    url: '/patients/search';
-};
-
-export type GetPatientsSearchResponses = {
-    /**
-     * Search results array.
-     */
-    200: Array<Patient>;
-};
-
-export type GetPatientsSearchResponse = GetPatientsSearchResponses[keyof GetPatientsSearchResponses];
-
-export type GetPatientsByIdRecordsData = {
+export type GetMedicalRecordsData = {
     body?: never;
     path: {
         id: string;
@@ -296,16 +255,16 @@ export type GetPatientsByIdRecordsData = {
     url: '/patients/{id}/records';
 };
 
-export type GetPatientsByIdRecordsResponses = {
+export type GetMedicalRecordsResponses = {
     /**
-     * History records array.
+     * OK
      */
     200: Array<MedicalRecord>;
 };
 
-export type GetPatientsByIdRecordsResponse = GetPatientsByIdRecordsResponses[keyof GetPatientsByIdRecordsResponses];
+export type GetMedicalRecordsResponse = GetMedicalRecordsResponses[keyof GetMedicalRecordsResponses];
 
-export type PostPatientsByIdRecordsData = {
+export type AddMedicalRecordData = {
     body: MedicalRecordRequest;
     path: {
         id: string;
@@ -314,14 +273,158 @@ export type PostPatientsByIdRecordsData = {
     url: '/patients/{id}/records';
 };
 
-export type PostPatientsByIdRecordsResponses = {
+export type AddMedicalRecordResponses = {
     /**
-     * Consultation record saved.
+     * OK
      */
-    201: MedicalRecord;
+    200: MedicalRecord;
 };
 
-export type PostPatientsByIdRecordsResponse = PostPatientsByIdRecordsResponses[keyof PostPatientsByIdRecordsResponses];
+export type AddMedicalRecordResponse = AddMedicalRecordResponses[keyof AddMedicalRecordResponses];
+
+export type MarkAllAsReadData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications/read-all';
+};
+
+export type MarkAllAsReadResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type RegisterData = {
+    body: RegisterRequest;
+    path?: never;
+    query?: never;
+    url: '/auth/register';
+};
+
+export type RegisterResponses = {
+    /**
+     * OK
+     */
+    200: UserResponse;
+};
+
+export type RegisterResponse = RegisterResponses[keyof RegisterResponses];
+
+export type LogoutData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/auth/logout';
+};
+
+export type LogoutResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type LoginData = {
+    body: LoginRequest;
+    path?: never;
+    query?: never;
+    url: '/auth/login';
+};
+
+export type LoginResponses = {
+    /**
+     * OK
+     */
+    200: UserResponse;
+};
+
+export type LoginResponse = LoginResponses[keyof LoginResponses];
+
+export type BookAppointmentData = {
+    body: AppointmentRequest;
+    path?: never;
+    query?: never;
+    url: '/appointments';
+};
+
+export type BookAppointmentResponses = {
+    /**
+     * OK
+     */
+    200: Appointment;
+};
+
+export type BookAppointmentResponse = BookAppointmentResponses[keyof BookAppointmentResponses];
+
+export type GetDoctorQueueData = {
+    body?: never;
+    path: {
+        doctorId: string;
+    };
+    query?: never;
+    url: '/queue/doctor/{doctorId}';
+};
+
+export type GetDoctorQueueResponses = {
+    /**
+     * OK
+     */
+    200: Array<QueueItem>;
+};
+
+export type GetDoctorQueueResponse = GetDoctorQueueResponses[keyof GetDoctorQueueResponses];
+
+export type SearchPatientsData = {
+    body?: never;
+    path?: never;
+    query: {
+        name: string;
+    };
+    url: '/patients/search';
+};
+
+export type SearchPatientsResponses = {
+    /**
+     * OK
+     */
+    200: Array<Patient>;
+};
+
+export type SearchPatientsResponse = SearchPatientsResponses[keyof SearchPatientsResponses];
+
+export type GetUnreadNotificationsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications/unread';
+};
+
+export type GetUnreadNotificationsResponses = {
+    /**
+     * OK
+     */
+    200: Array<Notification>;
+};
+
+export type GetUnreadNotificationsResponse = GetUnreadNotificationsResponses[keyof GetUnreadNotificationsResponses];
+
+export type SubscribeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/notifications/subscribe';
+};
+
+export type SubscribeResponses = {
+    /**
+     * OK
+     */
+    200: SseEmitter;
+};
+
+export type SubscribeResponse = SubscribeResponses[keyof SubscribeResponses];
 
 export type GetDoctorsData = {
     body?: never;
@@ -332,37 +435,48 @@ export type GetDoctorsData = {
 
 export type GetDoctorsResponses = {
     /**
-     * Active doctor directory list.
+     * OK
      */
     200: Array<DoctorResponse>;
 };
 
 export type GetDoctorsResponse = GetDoctorsResponses[keyof GetDoctorsResponses];
 
-export type PostAppointmentsData = {
-    body: AppointmentRequest;
+export type GetCurrentUserData = {
+    body?: never;
     path?: never;
     query?: never;
-    url: '/appointments';
+    url: '/auth/me';
 };
 
-export type PostAppointmentsErrors = {
+export type GetCurrentUserResponses = {
     /**
-     * Validation errors or scheduling conflict.
+     * OK
      */
-    400: unknown;
+    200: UserResponse;
 };
 
-export type PostAppointmentsResponses = {
+export type GetCurrentUserResponse = GetCurrentUserResponses[keyof GetCurrentUserResponses];
+
+export type GetPatientAppointmentsData = {
+    body?: never;
+    path: {
+        patientId: string;
+    };
+    query?: never;
+    url: '/appointments/patient/{patientId}';
+};
+
+export type GetPatientAppointmentsResponses = {
     /**
-     * Appointment booked successfully. Async SMS alert dispatched.
+     * OK
      */
-    201: Appointment;
+    200: Array<Appointment>;
 };
 
-export type PostAppointmentsResponse = PostAppointmentsResponses[keyof PostAppointmentsResponses];
+export type GetPatientAppointmentsResponse = GetPatientAppointmentsResponses[keyof GetPatientAppointmentsResponses];
 
-export type GetAppointmentsDoctorByDoctorIdData = {
+export type GetDoctorAppointmentsData = {
     body?: never;
     path: {
         doctorId: string;
@@ -371,101 +485,11 @@ export type GetAppointmentsDoctorByDoctorIdData = {
     url: '/appointments/doctor/{doctorId}';
 };
 
-export type GetAppointmentsDoctorByDoctorIdResponses = {
+export type GetDoctorAppointmentsResponses = {
     /**
-     * Assigned appointments array.
+     * OK
      */
     200: Array<Appointment>;
 };
 
-export type GetAppointmentsDoctorByDoctorIdResponse = GetAppointmentsDoctorByDoctorIdResponses[keyof GetAppointmentsDoctorByDoctorIdResponses];
-
-export type PutAppointmentsByIdStatusData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query: {
-        status: 'SCHEDULED' | 'CANCELLED' | 'COMPLETED';
-    };
-    url: '/appointments/{id}/status';
-};
-
-export type PutAppointmentsByIdStatusResponses = {
-    /**
-     * Appointment slot updated.
-     */
-    200: Appointment;
-};
-
-export type PutAppointmentsByIdStatusResponse = PutAppointmentsByIdStatusResponses[keyof PutAppointmentsByIdStatusResponses];
-
-export type PostQueueCheckInData = {
-    body: QueueRequest;
-    path?: never;
-    query?: never;
-    url: '/queue/check-in';
-};
-
-export type PostQueueCheckInResponses = {
-    /**
-     * Token issued, queued in WAITING state.
-     */
-    201: QueueItem;
-};
-
-export type PostQueueCheckInResponse = PostQueueCheckInResponses[keyof PostQueueCheckInResponses];
-
-export type GetQueueDoctorByDoctorIdData = {
-    body?: never;
-    path: {
-        doctorId: string;
-    };
-    query?: never;
-    url: '/queue/doctor/{doctorId}';
-};
-
-export type GetQueueDoctorByDoctorIdResponses = {
-    /**
-     * List of active queue items.
-     */
-    200: Array<QueueItem>;
-};
-
-export type GetQueueDoctorByDoctorIdResponse = GetQueueDoctorByDoctorIdResponses[keyof GetQueueDoctorByDoctorIdResponses];
-
-export type PutQueueByIdCallData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/queue/{id}/call';
-};
-
-export type PutQueueByIdCallResponses = {
-    /**
-     * Patient status updated to calling.
-     */
-    200: QueueItem;
-};
-
-export type PutQueueByIdCallResponse = PutQueueByIdCallResponses[keyof PutQueueByIdCallResponses];
-
-export type PutQueueByIdCompleteData = {
-    body?: never;
-    path: {
-        id: string;
-    };
-    query?: never;
-    url: '/queue/{id}/complete';
-};
-
-export type PutQueueByIdCompleteResponses = {
-    /**
-     * Consultation finalized, patient removed from active list.
-     */
-    200: QueueItem;
-};
-
-export type PutQueueByIdCompleteResponse = PutQueueByIdCompleteResponses[keyof PutQueueByIdCompleteResponses];
+export type GetDoctorAppointmentsResponse = GetDoctorAppointmentsResponses[keyof GetDoctorAppointmentsResponses];

@@ -3,20 +3,29 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import type { AxiosError } from "axios";
 import {
-  getAuthMeOptions,
-  getAuthMeQueryKey,
-  postAuthLoginMutation,
-  postAuthLogoutMutation,
-  postAuthRegisterMutation,
+  getCurrentUserOptions,
+  getCurrentUserQueryKey,
+  loginMutation,
+  logoutMutation,
+  registerMutation,
 } from "@/client/@tanstack/react-query.gen";
+import type { Options } from "@/client";
+import type {
+  LoginData,
+  LoginResponse,
+  LogoutData,
+  RegisterData,
+  RegisterResponse,
+} from "@/client/types.gen";
 
 export function useLogin() {
   const queryClient = useQueryClient();
-  return useMutation({
-    ...postAuthLoginMutation(),
+  return useMutation<LoginResponse, AxiosError<any>, Options<LoginData>>({
+    ...loginMutation(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: getAuthMeQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getCurrentUserQueryKey() });
       toast.success("Login Successful");
     },
     onError: (error: any) => {
@@ -28,8 +37,8 @@ export function useLogin() {
 export function useLogout() {
   const queryClient = useQueryClient();
   const router = useRouter();
-  return useMutation({
-    ...postAuthLogoutMutation(),
+  return useMutation<unknown, AxiosError<any>, Options<LogoutData>>({
+    ...logoutMutation(),
     onSuccess: () => {
       queryClient.clear();
       toast.success("Logged out successfully");
@@ -42,8 +51,8 @@ export function useLogout() {
 }
 
 export function useRegister() {
-  return useMutation({
-    ...postAuthRegisterMutation(),
+  return useMutation<RegisterResponse, AxiosError<any>, Options<RegisterData>>({
+    ...registerMutation(),
     onSuccess: () => {
       toast.success("Staff node registration complete! Please log in.");
     },
@@ -53,6 +62,6 @@ export function useRegister() {
   });
 }
 
-export function useAuthMe(options?: Parameters<typeof getAuthMeOptions>[0]) {
-  return useQuery(getAuthMeOptions(options));
+export function useAuthMe(options?: Parameters<typeof getCurrentUserOptions>[0]) {
+  return useQuery(getCurrentUserOptions(options));
 }
