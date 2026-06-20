@@ -10,6 +10,10 @@ import dev.salman.backend.messaging.MessagePublisher;
 import dev.salman.backend.messaging.dto.AuditEvent;
 import dev.salman.backend.messaging.dto.NotificationEvent;
 import dev.salman.backend.shared.SecurityUtils;
+import dev.salman.backend.features.notification.entity.Notification;
+import dev.salman.backend.features.notification.repository.NotificationRepository;
+import dev.salman.backend.features.notification.service.NotificationCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,25 +33,30 @@ public class AppointmentController {
     private final UserRepository userRepository;
     private final PatientRepository patientRepository;
     private final MessagePublisher messagePublisher;
+    private final NotificationRepository notificationRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public AppointmentController(AppointmentRepository appointmentRepository,
                                  UserRepository userRepository,
                                  PatientRepository patientRepository,
-                                 MessagePublisher messagePublisher) {
+                                 MessagePublisher messagePublisher,
+                                 NotificationRepository notificationRepository,
+                                 ApplicationEventPublisher eventPublisher) {
         this.appointmentRepository = appointmentRepository;
         this.userRepository = userRepository;
         this.patientRepository = patientRepository;
         this.messagePublisher = messagePublisher;
+        this.notificationRepository = notificationRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @PostMapping
     @PreAuthorize("hasAnyRole('RECEPTIONIST', 'ADMIN')")
     @Transactional
     public ResponseEntity<Appointment> bookAppointment(@RequestBody AppointmentRequest request) {
-        // 1. Verify patient exists
-        if (!patientRepository.existsById(request.getPatientId())) {
-            throw new EntityNotFoundException("Patient not found with ID: " + request.getPatientId());
-        }
+        // 1. Verify patient exists and load details
+        dev.salman.backend.features.patient.entity.Patient patient = patientRepository.findById(request.getPatientId())
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found with ID: " + request.getPatientId()));
 
         // 2. Verify doctor exists and has doctor role
         User doctor = userRepository.findById(request.getDoctorId())
@@ -96,6 +105,16 @@ public class AppointmentController {
                 .message("Your appointment has been scheduled for " + savedAppointment.getAppointmentTime().toString())
                 .channel("SMS")
                 .build());
+
+        // 7. Save App Notification for the Doctor and Publish Event
+        Notification appNotification = Notification.builder()
+                .userId(request.getDoctorId())
+                .message("New appointment booked with " + patient.getName() + " on " + savedAppointment.getAppointmentTime().toString())
+                .channel("APP")
+                .status("UNREAD")
+                .build();
+        Notification savedNotification = notificationRepository.save(appNotification);
+        eventPublisher.publishEvent(new NotificationCreatedEvent(request.getDoctorId(), savedNotification));
 
         return ResponseEntity.status(HttpStatus.CREATED).body(savedAppointment);
     }

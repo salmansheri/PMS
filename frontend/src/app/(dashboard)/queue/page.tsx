@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-
 // UI & Queue Components
 import { CurrentServing } from "@/components/queue/current-serving";
 import { IssueTokenForm } from "@/components/queue/issue-token-form";
@@ -10,6 +9,7 @@ import { WaitlistTable } from "@/components/queue/waitlist-table";
 import { LoadingState } from "@/components/ui/loading-state";
 import { StateController } from "@/components/ui/state-controller";
 import { SystemAlertBanner } from "@/components/ui/system-alert-banner";
+import { useQueueStore } from "@/store";
 
 const pageVariants = {
   initial: { opacity: 0, y: 15 },
@@ -29,6 +29,15 @@ const simulatorStates = [
 
 export default function QueuePage() {
   const [activeState, setActiveState] = useState<string>("normal");
+
+  const tokens = useQueueStore((state) => state.tokens);
+  const servingToken = useQueueStore((state) => state.servingToken);
+  const servingDoctor = useQueueStore((state) => state.servingDoctor);
+  const servingRoom = useQueueStore((state) => state.servingRoom);
+  const addToken = useQueueStore((state) => state.addToken);
+  const serveToken = useQueueStore((state) => state.serveToken);
+
+  const displayedTokens = activeState === "empty" ? [] : tokens;
 
   if (activeState === "loading") {
     return (
@@ -73,11 +82,28 @@ export default function QueuePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch flex-1">
         <div className="lg:col-span-7 flex flex-col gap-6">
-          <CurrentServing disabled={activeState === "empty"} />
-          <WaitlistTable tokens={activeState === "empty" ? [] : undefined} />
+          <CurrentServing
+            token={servingToken}
+            doctorName={servingDoctor}
+            roomName={servingRoom}
+            disabled={activeState === "empty"}
+          />
+          <WaitlistTable
+            tokens={displayedTokens}
+            onServeToken={(token) => {
+              if (activeState !== "empty") {
+                serveToken(token);
+              }
+            }}
+          />
         </div>
         <div className="lg:col-span-5">
-          <IssueTokenForm disabled={activeState === "empty"} />
+          <IssueTokenForm
+            onIssueToken={(data) => {
+              addToken(data.patientId, data.doctorDept, data.urgency);
+            }}
+            disabled={activeState === "empty"}
+          />
         </div>
       </div>
 

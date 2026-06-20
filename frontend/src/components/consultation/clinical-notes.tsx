@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import type React from "react";
 import { useState } from "react";
 import { GlassPanel } from "../ui/glass-panel";
-import { Textarea } from "../ui/input";
+import { Textarea } from "../ui/textarea";
 
 export interface ClinicalNotesProps {
   initialNotes?: string;

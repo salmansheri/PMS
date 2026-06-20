@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Geist, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/components/AuthProvider";
 import { Providers } from "@/components/Providers";
-import { UserProvider } from "@/context/UserContext";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -28,7 +31,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
+      className={cn(
+        "h-full",
+        "antialiased",
+        "dark",
+        inter.variable,
+        jetbrainsMono.variable,
+        "font-sans",
+        geist.variable,
+      )}
     >
       <head>
         <link
@@ -45,7 +56,7 @@ export default function RootLayout({
         <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-secondary/5 rounded-full blur-[150px] mix-blend-screen pointer-events-none z-[0]" />
 
         <Providers>
-          <UserProvider>{children}</UserProvider>
+          <AuthProvider>{children}</AuthProvider>
         </Providers>
       </body>
     </html>
