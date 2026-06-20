@@ -2,7 +2,7 @@
 
 import { motion } from "motion/react";
 import type React from "react";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLogout } from "@/hooks/api/use-auth";
 import { useNotifications } from "@/hooks/api/use-notifications";
 import { useUserStore } from "@/store";
@@ -27,7 +27,10 @@ export const Header: React.FC<HeaderProps> = ({
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setDropdownOpen(false);
       }
     }
@@ -70,9 +73,12 @@ export const Header: React.FC<HeaderProps> = ({
             {dropdownOpen && (
               <div className="absolute right-0 mt-3 w-80 bg-surface-container/95 border border-outline-variant rounded-xl shadow-2xl backdrop-blur-md overflow-hidden z-50 flex flex-col">
                 <div className="flex justify-between items-center px-4 py-3 border-b border-outline-variant bg-surface-container-high">
-                  <span className="text-xs font-bold text-on-surface">Unread Alerts</span>
+                  <span className="text-xs font-bold text-on-surface">
+                    Unread Alerts
+                  </span>
                   {notifications.length > 0 && (
-                    <button
+                    // biome-ignore lint/a11y/useButtonType: <explanation>
+<button
                       onClick={() => {
                         markAllRead.mutate({});
                         setDropdownOpen(false);
@@ -90,14 +96,24 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
                   ) : (
                     notifications.map((notif) => (
-                      <div key={notif.id} className="px-4 py-3 hover:bg-surface-container-high transition-colors duration-150">
-                        <p className="text-xs text-on-surface leading-normal">{notif.message}</p>
+                      <div
+                        key={notif.id}
+                        className="px-4 py-3 hover:bg-surface-container-high transition-colors duration-150"
+                      >
+                        <p className="text-xs text-on-surface leading-normal">
+                          {notif.message}
+                        </p>
                         <div className="flex justify-between items-center mt-1.5">
                           <span className="text-[9px] font-mono uppercase tracking-widest text-secondary/80">
                             {notif.channel || "Alert"}
                           </span>
                           <span className="text-[9px] text-secondary/50">
-                            {notif.createdAt ? new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                            {notif.createdAt
+                              ? new Date(notif.createdAt).toLocaleTimeString(
+                                  [],
+                                  { hour: "2-digit", minute: "2-digit" },
+                                )
+                              : ""}
                           </span>
                         </div>
                       </div>
@@ -115,14 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             help_outline
           </motion.button>
-          <motion.button
-            type="button"
-            whileHover={{ scale: 1.1, color: "#7fd0ff" }}
-            whileTap={{ scale: 0.95 }}
-            className="material-symbols-outlined cursor-pointer hover:drop-shadow-[0_0_8px_rgba(127,208,255,0.5)] outline-none"
-          >
-            dark_mode
-          </motion.button>
+
           <motion.button
             type="button"
             onClick={() => logoutMutation.mutate({})}
